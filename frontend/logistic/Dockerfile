@@ -36,8 +36,9 @@ fi\n\
 exec nginx -g "daemon off;"\n\
 ' > /opt/app-root/src/start.sh && chmod +x /opt/app-root/src/start.sh
 
-# Create nginx config for SPA
-RUN echo 'server {\n\
+# Create nginx config directory and config for SPA
+RUN mkdir -p /etc/nginx/conf.d && \
+    echo 'server {\n\
     listen 8080;\n\
     server_name _;\n\
     root /opt/app-root/src;\n\
@@ -58,7 +59,7 @@ RUN echo 'server {\n\
     gzip_min_length 1024;\n\
     gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;\n\
 }\n\
-' > /etc/nginx/nginx.d/default.conf
+' > /etc/nginx/conf.d/default.conf
 
 # Fix permissions for OpenShift (runs as arbitrary UID)
 RUN chgrp -R 0 /opt/app-root && \
