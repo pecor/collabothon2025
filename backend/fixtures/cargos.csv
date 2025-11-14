@@ -1,0 +1,11 @@
+name,dimensions,weight,volume,requires_cold,requires_box,requires_crate,forklift_needed,license_c_required,license_ce_required,license_adr_required,special_training
+Fresh Vegetables,120x80x150,800,14.4,true,false,true,true,true,false,false,"[]"
+Electronics,100x80x120,500,9.6,false,true,false,false,true,false,false,"[]"
+Chemical Materials,80x60x100,1200,4.8,false,false,true,false,true,false,true,"[""Chemical Handling""]"
+Furniture,200x100x180,1500,36,false,false,true,true,true,true,false,"[]"
+Frozen Food,120x80x140,900,13.44,true,false,true,true,true,false,false,"[""Cold Chain""]"
+Medical Supplies,80x60x80,300,3.84,true,true,false,false,true,false,false,"[""Medical Transport""]"
+Construction Materials,150x100x200,2500,30,false,false,true,true,true,true,false,"[]"
+Automotive Parts,100x80x100,800,8,false,true,false,false,true,false,false,"[]"
+Hazardous Waste,80x60x100,1000,4.8,false,false,true,false,true,false,true,"[""Hazmat"",""ADR Full""]"
+Textiles,120x80x160,600,15.36,false,true,false,false,true,false,false,"[]"

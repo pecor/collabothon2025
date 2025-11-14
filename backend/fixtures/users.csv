@@ -1,0 +1,11 @@
+name,email,phone,license_c,license_ce,license_adr,forklift_certified,is_active
+Jan Kowalski,jan.kowalski@example.com,+48601234567,true,false,false,true,true
+Piotr Nowak,piotr.nowak@example.com,+48602345678,true,true,true,false,true
+Anna Wiśniewska,anna.wisniewska@example.com,+48603456789,true,true,false,true,true
+Michał Zieliński,michal.zielinski@example.com,+48604567890,true,false,true,false,true
+Katarzyna Mazur,katarzyna.mazur@example.com,+48605678901,false,false,false,true,true
+Tomasz Lewandowski,tomasz.lewandowski@example.com,+48606789012,true,true,true,true,true
+Magdalena Kamińska,magdalena.kaminska@example.com,+48607890123,true,false,false,false,true
+Krzysztof Wójcik,krzysztof.wojcik@example.com,+48608901234,true,true,false,true,true
+Agnieszka Kowalczyk,agnieszka.kowalczyk@example.com,+48609012345,false,false,false,true,true
+Marek Jankowski,marek.jankowski@example.com,+48601112233,true,true,true,false,true
