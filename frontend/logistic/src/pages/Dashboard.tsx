@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { StatsCards, RecentOrders, TopRoutes, AlertsSidebar } from '@/components/dashboard'
+import { StatsCards, RecentOrders, AlertsSidebar } from '@/components/dashboard'
 import { Navbar } from '@/components/layout'
 import { getDashboardStats, getActiveOrders, type Order } from '@/lib/api'
 

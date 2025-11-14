@@ -21,7 +21,7 @@ export function EmailUpload() {
     }
   }
 
-  const processEmail = async (content: string) => {
+  const processEmail = async (_content: string) => {
     setIsProcessing(true)
     // Simulate AI processing
     setTimeout(() => {
