@@ -19,6 +19,12 @@ export function Home() {
           <div className="flex items-center gap-3">
             <Button 
               variant="outline" 
+              onClick={() => navigate('/orders')}
+            >
+              Zlecenia
+            </Button>
+            <Button 
+              variant="outline" 
               onClick={() => navigate('/fleet')}
             >
               Flota

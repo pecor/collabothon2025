@@ -39,7 +39,24 @@ export function OrderForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     console.log('Form submitted:', formData)
-    // TODO: Integrate with API
+    
+    // Get existing orders from localStorage
+    const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]')
+    
+    // Create new order with unique ID and timestamp
+    const newOrder = {
+      id: Date.now().toString(),
+      ...formData,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    }
+    
+    // Add to orders list
+    existingOrders.push(newOrder)
+    localStorage.setItem('orders', JSON.stringify(existingOrders))
+    
+    // Navigate to orders list
+    window.location.href = '/orders'
   }
 
   return (
@@ -206,13 +223,28 @@ export function OrderForm() {
             className="bg-red-600 hover:bg-red-700 text-white flex-1"
             size="lg"
           >
-            Analizuj zlecenie
+            Dodaj zlecenie
           </Button>
           <Button
             type="button"
             variant="outline"
             className="border-zinc-700 text-white hover:bg-zinc-800"
             size="lg"
+            onClick={() => {
+              setFormData({
+                cargoType: '',
+                weight: '',
+                length: '',
+                width: '',
+                height: '',
+                temperature: '',
+                loadingAddress: '',
+                unloadingAddress: '',
+                loadingDate: '',
+                unloadingDate: '',
+                specialRequirements: ''
+              })
+            }}
           >
             Wyczyść
           </Button>
