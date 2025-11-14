@@ -145,11 +145,8 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
-<<<<<<< HEAD
-# Google Maps API
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
-=======
+
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
 ]
->>>>>>> 7425cc8ba485d5762a8c1c06e4ec39f89bc054b2
