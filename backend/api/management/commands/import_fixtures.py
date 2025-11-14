@@ -2,7 +2,7 @@ import csv
 import os
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from api.models import User, Vehicle, Route, Cargo, Holiday
+from api.models import User, Vehicle, Route, Cargo, Order, Holiday
 from datetime import timedelta
 
 
@@ -32,6 +32,9 @@ class Command(BaseCommand):
                 
                 # Import Cargos
                 self.import_cargos(fixtures_dir)
+                
+                # Import Orders
+                self.import_orders(fixtures_dir)
                 
                 # Import Holidays
                 self.import_holidays(fixtures_dir)
@@ -109,9 +112,10 @@ class Command(BaseCommand):
                 
                 Cargo.objects.create(
                     name=row['name'],
-                    dimensions=row['dimensions'],
+                    length=float(row['length']),
+                    width=float(row['width']),
+                    height=float(row['height']),
                     weight=float(row['weight']),
-                    volume=float(row['volume']),
                     requires_cold=row['requires_cold'].lower() == 'true',
                     requires_box=row['requires_box'].lower() == 'true',
                     requires_crate=row['requires_crate'].lower() == 'true',
@@ -122,6 +126,20 @@ class Command(BaseCommand):
                     special_training=special_training,
                 )
         self.stdout.write(self.style.SUCCESS(f'Imported {Cargo.objects.count()} cargos'))
+
+    def import_orders(self, fixtures_dir):
+        file_path = os.path.join(fixtures_dir, 'orders.csv')
+        with open(file_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                Order.objects.create(
+                    user_id=int(row['user_id']),
+                    cargo_id=int(row['cargo_id']),
+                    route_id=int(row['route_id']),
+                    planned_date=row['planned_date'],
+                    status=row['status'],
+                )
+        self.stdout.write(self.style.SUCCESS(f'Imported {Order.objects.count()} orders'))
 
     def import_holidays(self, fixtures_dir):
         file_path = os.path.join(fixtures_dir, 'holidays.csv')
