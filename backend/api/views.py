@@ -3,12 +3,18 @@ from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from django.db.models import Q, Count, Avg
 from datetime import datetime, timedelta
+import googlemaps
+import os
+from django.conf import settings
+from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 from .models import User, Vehicle, Route, Cargo, Order, Tracker, Holiday, TransportLaw
 from .serializers import (
     UserSerializer, VehicleSerializer, RouteSerializer, CargoSerializer,
     OrderSerializer, OrderCreateSerializer, TrackerSerializer, HolidaySerializer,
     OrderAssignmentSerializer, VehicleAvailabilitySerializer, DriverAvailabilitySerializer,
-    RouteOptimizationSerializer, ProfitCalculationSerializer, TransportLawSerializer
+    RouteOptimizationSerializer, ProfitCalculationSerializer, TransportLawSerializer,
+    RouteCalculationSerializer
 )
 
 
@@ -622,3 +628,383 @@ class TransportLawViewSet(viewsets.ReadOnlyModelViewSet):
         """Get list of all available countries"""
         countries = TransportLaw.objects.values_list('country', flat=True).order_by('country')
         return Response({'countries': list(countries)})
+
+
+@extend_schema(
+    request=RouteCalculationSerializer,
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'origin': {
+                    'type': 'object',
+                    'properties': {
+                        'address': {'type': 'string'},
+                        'formatted_address': {'type': 'string'},
+                        'coordinates': {
+                            'type': 'object',
+                            'properties': {
+                                'lat': {'type': 'number'},
+                                'lng': {'type': 'number'}
+                            }
+                        }
+                    }
+                },
+                'destination': {
+                    'type': 'object',
+                    'properties': {
+                        'address': {'type': 'string'},
+                        'formatted_address': {'type': 'string'},
+                        'coordinates': {
+                            'type': 'object',
+                            'properties': {
+                                'lat': {'type': 'number'},
+                                'lng': {'type': 'number'}
+                            }
+                        }
+                    }
+                },
+                'distance_km': {'type': 'number'},
+                'distance_miles': {'type': 'number'},
+                'distance_meters': {'type': 'integer'},
+                'estimated_time_seconds': {'type': 'integer'},
+                'estimated_time_hours': {'type': 'number'},
+                'estimated_time_formatted': {'type': 'string'},
+                'countries': {
+                    'type': 'array',
+                    'items': {'type': 'string'}
+                },
+                'cities': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'object',
+                        'properties': {
+                            'name': {'type': 'string'},
+                            'country': {'type': 'string'},
+                            'coordinates': {
+                                'type': 'object',
+                                'properties': {
+                                    'lat': {'type': 'number'},
+                                    'lng': {'type': 'number'}
+                                }
+                            }
+                        }
+                    }
+                },
+                'waypoints': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'object',
+                        'properties': {
+                            'lat': {'type': 'number'},
+                            'lng': {'type': 'number'}
+                        }
+                    }
+                },
+                'route_summary': {'type': 'string'},
+                'summary': {
+                    'type': 'object',
+                    'properties': {
+                        'total_countries': {'type': 'integer'},
+                        'total_cities': {'type': 'integer'},
+                        'total_waypoints': {'type': 'integer'},
+                        'average_speed_kmh': {'type': 'number'}
+                    }
+                },
+                'route_options': {
+                    'type': 'object',
+                    'properties': {
+                        'avoid_tolls': {'type': 'boolean'},
+                        'avoid_highways': {'type': 'boolean'},
+                        'avoid_ferries': {'type': 'boolean'}
+                    }
+                }
+            }
+        },
+        400: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'},
+                'message': {'type': 'string'}
+            }
+        },
+        500: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'},
+                'message': {'type': 'string'},
+                'details': {'type': 'string'}
+            }
+        }
+    },
+    summary='Calculate route between two addresses',
+    description='Calculate route, distance, estimated time, and countries/cities passed through using Google Maps API',
+    examples=[
+        OpenApiExample(
+            'Example Request',
+            value={
+                'origin_address': 'Warsaw, Poland',
+                'destination_address': 'Berlin, Germany',
+                'avoid_tolls': False,
+                'avoid_highways': False,
+                'avoid_ferries': False
+            },
+            request_only=True
+        ),
+        OpenApiExample(
+            'Example Response',
+            value={
+                'origin': {
+                    'address': 'Warsaw, Poland',
+                    'formatted_address': 'Warsaw, Poland',
+                    'coordinates': {'lat': 52.2297, 'lng': 21.0122}
+                },
+                'destination': {
+                    'address': 'Berlin, Germany',
+                    'formatted_address': 'Berlin, Germany',
+                    'coordinates': {'lat': 52.5200, 'lng': 13.4050}
+                },
+                'distance_km': 574.23,
+                'distance_miles': 356.45,
+                'distance_meters': 574230,
+                'estimated_time_seconds': 25860,
+                'estimated_time_hours': 7.18,
+                'estimated_time_formatted': '7h 11min',
+                'countries': ['Germany', 'Poland'],
+                'cities': [
+                    {
+                        'name': 'Poznań',
+                        'country': 'Poland',
+                        'coordinates': {'lat': 52.4064, 'lng': 16.9252}
+                    }
+                ],
+                'waypoints': [
+                    {'lat': 52.2297, 'lng': 21.0122},
+                    {'lat': 52.4064, 'lng': 16.9252}
+                ],
+                'route_summary': 'A2 and A1',
+                'summary': {
+                    'total_countries': 2,
+                    'total_cities': 1,
+                    'total_waypoints': 150,
+                    'average_speed_kmh': 80.0
+                },
+                'route_options': {
+                    'avoid_tolls': False,
+                    'avoid_highways': False,
+                    'avoid_ferries': False
+                }
+            },
+            response_only=True
+        )
+    ]
+)
+@api_view(['POST'])
+def calculate_route(request):
+    """
+    Calculate route between two addresses using Google Maps API
+    Returns distance, estimated time, and countries/cities passed through
+    """
+    serializer = RouteCalculationSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    
+    origin = serializer.validated_data['origin_address']
+    destination = serializer.validated_data['destination_address']
+    avoid_tolls = serializer.validated_data.get('avoid_tolls', False)
+    avoid_highways = serializer.validated_data.get('avoid_highways', False)
+    avoid_ferries = serializer.validated_data.get('avoid_ferries', False)
+    
+    # Check if Google Maps API key is configured
+    api_key = settings.GOOGLE_MAPS_API_KEY
+    if not api_key:
+        return Response({
+            'error': 'Google Maps API key is not configured',
+            'message': 'Please set GOOGLE_MAPS_API_KEY environment variable'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    try:
+        # Initialize Google Maps client
+        gmaps = googlemaps.Client(key=api_key)
+        
+        # Step 1: Geocode addresses to get coordinates
+        origin_geocode = gmaps.geocode(origin)
+        dest_geocode = gmaps.geocode(destination)
+        
+        if not origin_geocode or not dest_geocode:
+            return Response({
+                'error': 'Could not geocode one or both addresses',
+                'origin_found': origin_geocode is not None and len(origin_geocode) > 0,
+                'destination_found': dest_geocode is not None and len(dest_geocode) > 0
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        origin_location = origin_geocode[0]['geometry']['location']
+        dest_location = dest_geocode[0]['geometry']['location']
+        
+        # Step 2: Calculate route using Google Directions API
+        avoid_list = []
+        if avoid_tolls:
+            avoid_list.append('tolls')
+        if avoid_highways:
+            avoid_list.append('highways')
+        if avoid_ferries:
+            avoid_list.append('ferries')
+        
+        directions_result = gmaps.directions(
+            origin=origin,
+            destination=destination,
+            mode='driving',
+            avoid=avoid_list if avoid_list else None,
+            alternatives=False
+        )
+        
+        if not directions_result or len(directions_result) == 0:
+            return Response({
+                'error': 'Could not calculate route',
+                'message': 'Google Maps could not find a route between the addresses'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        route = directions_result[0]
+        leg = route['legs'][0]
+        
+        # Extract route information
+        distance_meters = leg['distance']['value']
+        distance_km = distance_meters / 1000
+        duration_seconds = leg['duration']['value']
+        duration_hours = duration_seconds / 3600
+        
+        # Extract steps for waypoints
+        steps = leg.get('steps', [])
+        waypoints = []
+        for step in steps:
+            start_location = step['start_location']
+            waypoints.append({
+                'lat': start_location['lat'],
+                'lng': start_location['lng']
+            })
+        
+        # Add destination as final waypoint
+        if waypoints:
+            end_location = leg['end_location']
+            waypoints.append({
+                'lat': end_location['lat'],
+                'lng': end_location['lng']
+            })
+        
+        # Step 3: Extract countries and cities from route using reverse geocoding
+        countries_passed = set()
+        cities_passed = []
+        
+        # Sample waypoints to avoid too many API calls
+        sample_waypoints = waypoints[::max(1, len(waypoints) // 15)][:10]
+        
+        for waypoint in sample_waypoints:
+            try:
+                reverse_geocode = gmaps.reverse_geocode((waypoint['lat'], waypoint['lng']))
+                if reverse_geocode:
+                    address_components = reverse_geocode[0].get('address_components', [])
+                    
+                    # Extract country
+                    for component in address_components:
+                        if 'country' in component.get('types', []):
+                            countries_passed.add(component['long_name'])
+                            break
+                    
+                    # Extract city
+                    city_name = None
+                    for component in address_components:
+                        if any(t in component.get('types', []) for t in ['locality', 'administrative_area_level_2', 'administrative_area_level_1']):
+                            city_name = component['long_name']
+                            break
+                    
+                    if city_name:
+                        country_name = None
+                        for component in address_components:
+                            if 'country' in component.get('types', []):
+                                country_name = component['long_name']
+                                break
+                        
+                        cities_passed.append({
+                            'name': city_name,
+                            'country': country_name or '',
+                            'coordinates': waypoint
+                        })
+            except Exception as e:
+                print(f"Reverse geocoding error for waypoint: {e}")
+                continue
+        
+        # Remove duplicate cities
+        seen_cities = set()
+        unique_cities = []
+        for city in cities_passed:
+            key = (city.get('name', ''), city.get('country', ''))
+            if key not in seen_cities:
+                seen_cities.add(key)
+                unique_cities.append(city)
+        
+        # Format addresses
+        origin_formatted = origin_geocode[0].get('formatted_address', origin)
+        dest_formatted = dest_geocode[0].get('formatted_address', destination)
+        
+        return Response({
+            'origin': {
+                'address': origin,
+                'formatted_address': origin_formatted,
+                'coordinates': {
+                    'lat': origin_location['lat'],
+                    'lng': origin_location['lng']
+                }
+            },
+            'destination': {
+                'address': destination,
+                'formatted_address': dest_formatted,
+                'coordinates': {
+                    'lat': dest_location['lat'],
+                    'lng': dest_location['lng']
+                }
+            },
+            'distance_km': round(distance_km, 2),
+            'distance_miles': round(distance_km * 0.621371, 2),
+            'distance_meters': distance_meters,
+            'estimated_time_seconds': duration_seconds,
+            'estimated_time_hours': round(duration_hours, 2),
+            'estimated_time_formatted': format_duration(duration_seconds),
+            'countries': sorted(list(countries_passed)),
+            'cities': unique_cities,
+            'waypoints': waypoints,
+            'route_summary': route.get('summary', ''),
+            'summary': {
+                'total_countries': len(countries_passed),
+                'total_cities': len(unique_cities),
+                'total_waypoints': len(waypoints),
+                'average_speed_kmh': round(distance_km / duration_hours, 2) if duration_hours > 0 else 0
+            },
+            'route_options': {
+                'avoid_tolls': avoid_tolls,
+                'avoid_highways': avoid_highways,
+                'avoid_ferries': avoid_ferries
+            }
+        })
+        
+    except googlemaps.exceptions.ApiError as e:
+        return Response({
+            'error': 'Google Maps API error',
+            'message': str(e),
+            'details': 'Check your API key and billing status'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        return Response({
+            'error': str(e),
+            'message': 'Error calculating route'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def format_duration(seconds):
+    """
+    Format duration in seconds to human-readable string
+    """
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    
+    if hours > 0:
+        return f"{hours}h {minutes}min"
+    return f"{minutes}min"

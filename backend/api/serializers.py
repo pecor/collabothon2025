@@ -131,3 +131,12 @@ class TransportLawSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransportLaw
         fields = '__all__'
+
+
+class RouteCalculationSerializer(serializers.Serializer):
+    """Serializer for route calculation request using Google Maps"""
+    origin_address = serializers.CharField(required=True, help_text="Starting address (e.g., 'Warsaw, Poland')")
+    destination_address = serializers.CharField(required=True, help_text="Destination address (e.g., 'Berlin, Germany')")
+    avoid_tolls = serializers.BooleanField(required=False, default=False, help_text="Avoid toll roads")
+    avoid_highways = serializers.BooleanField(required=False, default=False, help_text="Avoid highways")
+    avoid_ferries = serializers.BooleanField(required=False, default=False, help_text="Avoid ferries")

@@ -14,7 +14,10 @@ router.register(r'holidays', views.HolidayViewSet, basename='holiday')
 router.register(r'transport-laws', views.TransportLawViewSet, basename='transport-law')
 
 urlpatterns = [
-    path('', include(router.urls)),
+    # Custom endpoints must be BEFORE router to avoid conflicts
+    path('routes/calculate/', views.calculate_route, name='calculate_route'),
     path('health/', views.health_check, name='health_check'),
     path('dashboard/stats/', views.dashboard_stats, name='dashboard_stats'),
+    # Router URLs (must be last to catch remaining routes)
+    path('', include(router.urls)),
 ]
