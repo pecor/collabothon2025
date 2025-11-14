@@ -80,9 +80,10 @@ class Route(models.Model):
 class Cargo(models.Model):
     """Cargo Items"""
     name = models.CharField(max_length=255, verbose_name="Cargo Name")
-    dimensions = models.CharField(max_length=100, verbose_name="Dimensions (W*H*D)")
+    length = models.FloatField(default=1, verbose_name="Length (cm)")
+    width = models.FloatField(default=1, verbose_name="Width (cm)")
+    height = models.FloatField(default=1, verbose_name="Height (cm)")
     weight = models.FloatField(verbose_name="Weight (kg)")
-    volume = models.FloatField(verbose_name="Volume (m³)")
     requires_cold = models.BooleanField(default=False, verbose_name="Requires Refrigeration")
     requires_box = models.BooleanField(default=False, verbose_name="Requires Box")
     requires_crate = models.BooleanField(default=False, verbose_name="Requires Crate")
