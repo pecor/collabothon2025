@@ -21,20 +21,15 @@ FROM registry.access.redhat.com/ubi8/nginx-120
 # Switch to root to make changes
 USER root
 
+# Install gettext for envsubst
+RUN yum install -y gettext && yum clean all
+
 # Copy built files from builder stage
 COPY --from=builder /app/dist /opt/app-root/src
 
-# Create runtime config script that injects env vars into built files
-RUN echo '#!/bin/sh\n\
-set -e\n\
-# Replace environment variables in runtime-config.js\n\
-if [ -f /opt/app-root/src/runtime-config.js ]; then\n\
-  envsubst < /opt/app-root/src/runtime-config.js > /opt/app-root/src/runtime-config.js.tmp\n\
-  mv /opt/app-root/src/runtime-config.js.tmp /opt/app-root/src/runtime-config.js\n\
-fi\n\
-# Start nginx\n\
-exec nginx -g "daemon off;"\n\
-' > /opt/app-root/src/start.sh && chmod +x /opt/app-root/src/start.sh
+# Copy startup script
+COPY start.sh /opt/app-root/src/start.sh
+RUN chmod +x /opt/app-root/src/start.sh
 
 # Create nginx config directory and config for SPA
 RUN mkdir -p /etc/nginx/conf.d && \
