@@ -39,9 +39,18 @@ export function AddOrder() {
               </div>
             </div>
           </div>
-          <Button variant="outline" className="border-zinc-700 text-white hover:bg-zinc-900">
-            Zapisz jako szkic
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              className="border-zinc-700 text-white hover:bg-zinc-900"
+              onClick={() => navigate('/fleet')}
+            >
+              Zobacz flotę
+            </Button>
+            <Button variant="outline" className="border-zinc-700 text-white hover:bg-zinc-900">
+              Zapisz jako szkic
+            </Button>
+          </div>
         </div>
       </header>
 

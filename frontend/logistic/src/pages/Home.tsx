@@ -16,9 +16,18 @@ export function Home() {
             </div>
             <h1 className="text-2xl font-bold text-white">TruckAI</h1>
           </div>
-          <Button variant="outline" className="border-zinc-700 text-white hover:bg-zinc-900">
-            Zaloguj się
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              className="border-zinc-700 text-white hover:bg-zinc-900"
+              onClick={() => navigate('/fleet')}
+            >
+              Zobacz flotę
+            </Button>
+            <Button variant="outline" className="border-zinc-700 text-white hover:bg-zinc-900">
+              Zaloguj się
+            </Button>
+          </div>
         </div>
       </header>
 
