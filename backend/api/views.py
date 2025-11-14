@@ -243,6 +243,81 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
     
+    @extend_schema(
+        summary='Get orders by assignment status',
+        description='Get orders grouped by assignment status - returns assigned orders (with driver and vehicle) and unassigned orders',
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'assigned': {
+                        'type': 'object',
+                        'properties': {
+                            'count': {'type': 'integer'},
+                            'orders': {
+                                'type': 'array',
+                                'items': {'$ref': '#/components/schemas/Order'}
+                            }
+                        }
+                    },
+                    'unassigned': {
+                        'type': 'object',
+                        'properties': {
+                            'count': {'type': 'integer'},
+                            'orders': {
+                                'type': 'array',
+                                'items': {'$ref': '#/components/schemas/Order'}
+                            }
+                        }
+                    },
+                    'summary': {
+                        'type': 'object',
+                        'properties': {
+                            'total_assigned': {'type': 'integer'},
+                            'total_unassigned': {'type': 'integer'},
+                            'total_orders': {'type': 'integer'}
+                        }
+                    }
+                }
+            }
+        }
+    )
+    @action(detail=False, methods=['get'])
+    def assignment_status(self, request):
+        """
+        Get orders grouped by assignment status
+        Returns assigned orders (with driver and vehicle) and unassigned orders
+        """
+        # Orders with both driver and vehicle assigned
+        assigned_orders = Order.objects.filter(
+            driver__isnull=False,
+            vehicle__isnull=False
+        ).select_related('driver', 'vehicle', 'cargo', 'route', 'user')
+        
+        # Orders without driver or vehicle (or both)
+        unassigned_orders = Order.objects.filter(
+            Q(driver__isnull=True) | Q(vehicle__isnull=True)
+        ).select_related('driver', 'vehicle', 'cargo', 'route', 'user')
+        
+        assigned_serializer = OrderSerializer(assigned_orders, many=True)
+        unassigned_serializer = OrderSerializer(unassigned_orders, many=True)
+        
+        return Response({
+            'assigned': {
+                'count': assigned_orders.count(),
+                'orders': assigned_serializer.data
+            },
+            'unassigned': {
+                'count': unassigned_orders.count(),
+                'orders': unassigned_serializer.data
+            },
+            'summary': {
+                'total_assigned': assigned_orders.count(),
+                'total_unassigned': unassigned_orders.count(),
+                'total_orders': Order.objects.count()
+            }
+        })
+    
     @action(detail=False, methods=['get'])
     def active(self, request):
         """Get active orders (assigned or in transit)"""
