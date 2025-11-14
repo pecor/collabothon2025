@@ -2,6 +2,8 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/ca
 import { Button } from '@/components/ui/button'
 import { Package, Weight, Ruler, Thermometer } from 'lucide-react'
 import { useState } from 'react'
+import { createOrder, api } from '@/lib/api'
+import type { Cargo, Route } from '@/lib/api'
 
 interface OrderFormData {
   cargoType: string
@@ -31,32 +33,98 @@ export function OrderForm() {
     unloadingDate: '',
     specialRequirements: ''
   })
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleChange = (field: keyof OrderFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Form submitted:', formData)
+    setIsLoading(true)
+    setError(null)
     
-    // Get existing orders from localStorage
-    const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]')
-    
-    // Create new order with unique ID and timestamp
-    const newOrder = {
-      id: Date.now().toString(),
-      ...formData,
-      status: 'pending',
-      createdAt: new Date().toISOString()
+    try {
+      // Step 1: Create Cargo
+      const cargoData = {
+        name: formData.cargoType || 'Generic Cargo',
+        length: parseFloat(formData.length) || 100,
+        width: parseFloat(formData.width) || 80,
+        height: parseFloat(formData.height) || 120,
+        weight: parseFloat(formData.weight) || 500,
+        requires_cold: formData.temperature ? parseFloat(formData.temperature) < 10 : false,
+        requires_box: true,
+        requires_crate: false,
+        forklift_needed: parseFloat(formData.weight) > 1000,
+        license_c_required: true,
+        license_ce_required: parseFloat(formData.weight) > 1500,
+        license_adr_required: false,
+        special_training: formData.specialRequirements ? [formData.specialRequirements] : []
+      }
+      
+      const cargoResponse = await api.post<Cargo>('/cargos/', cargoData)
+      console.log('Cargo created:', cargoResponse.data)
+      
+      // Step 2: Find or create Route
+      let route: Route | null = null
+      
+      // Try to find existing route using search endpoint
+      const routesResponse = await api.get<Route[]>('/routes/search/', {
+        params: {
+          origin: formData.loadingAddress,
+          destination: formData.unloadingAddress
+        }
+      })
+      
+      if (routesResponse.data.length > 0) {
+        route = routesResponse.data[0]
+        console.log('Found existing route:', route)
+      } else {
+        // Create new route (simplified - would need distance calculation in production)
+        const routeData = {
+          origin: formData.loadingAddress || 'Warsaw',
+          destination: formData.unloadingAddress || 'Berlin',
+          distance_km: 500, // Default distance
+          estimated_time: '06:00:00', // 6 hours default
+          holiday_blocked: false,
+          status: 'planned'
+        }
+        
+        const newRouteResponse = await api.post<Route>('/routes/', routeData)
+        route = newRouteResponse.data
+        console.log('Route created:', route)
+      }
+      
+      // Step 3: Create Order
+      if (!route) {
+        throw new Error('Failed to create or find route')
+      }
+      
+      const orderData = {
+        user: 1, // Default user - in production this would come from auth
+        cargo: cargoResponse.data.id,
+        route: route.id,
+        planned_date: formData.loadingDate || new Date().toISOString().split('T')[0],
+        status: 'new'
+      }
+      
+      console.log('Creating order with data:', orderData)
+      const orderResponse = await createOrder(orderData)
+      console.log('Order created:', orderResponse)
+      
+      // Navigate to orders list
+      window.location.href = '/orders'
+    } catch (err: any) {
+      console.error('Error creating order:', err)
+      console.error('Error details:', err.response?.data)
+      const errorDetails = err.response?.data 
+        ? JSON.stringify(err.response.data, null, 2)
+        : err.message
+      setError(errorDetails || 'Failed to create order')
+    } finally {
+      setIsLoading(false)
     }
-    
-    // Add to orders list
-    existingOrders.push(newOrder)
-    localStorage.setItem('orders', JSON.stringify(existingOrders))
-    
-    // Navigate to orders list
-    window.location.href = '/orders'
   }
 
   return (
@@ -72,6 +140,13 @@ export function OrderForm() {
       </CardHeader>
 
       <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-6">
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-900/20 border border-red-700 rounded-lg px-4 py-3 text-red-400">
+            <strong>Error:</strong> {error}
+          </div>
+        )}
+        
         {/* Cargo Details */}
         <div className="space-y-4">
           <h3 className="text-white font-semibold text-lg">Cargo Type</h3>
@@ -189,7 +264,7 @@ export function OrderForm() {
             <div>
               <label className="text-zinc-400 text-sm block mb-2">Loading Date</label>
               <input
-                type="datetime-local"
+                type="date"
                 value={formData.loadingDate}
                 onChange={(e) => handleChange('loadingDate', e.target.value)}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
@@ -208,7 +283,7 @@ export function OrderForm() {
             <div>
               <label className="text-zinc-400 text-sm block mb-2">Unloading Date</label>
               <input
-                type="datetime-local"
+                type="date"
                 value={formData.unloadingDate}
                 onChange={(e) => handleChange('unloadingDate', e.target.value)}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
@@ -222,14 +297,16 @@ export function OrderForm() {
             type="submit"
             className="bg-red-600 hover:bg-red-700 text-white flex-1"
             size="lg"
+            disabled={isLoading}
           >
-            Add Order
+            {isLoading ? 'Creating Order...' : 'Add Order'}
           </Button>
           <Button
             type="button"
             variant="outline"
             className="border-zinc-700 text-white hover:bg-zinc-800"
             size="lg"
+            disabled={isLoading}
             onClick={() => {
               setFormData({
                 cargoType: '',

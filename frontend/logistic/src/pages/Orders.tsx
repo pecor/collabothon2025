@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Package, MapPin, Calendar, Weight, Plus, Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Navbar } from '@/components/layout'
+import { getOrders, type Order as ApiOrder } from '@/lib/api'
 
 interface Order {
   id: string
@@ -25,11 +26,46 @@ export function Orders() {
   const navigate = useNavigate()
   const [orders, setOrders] = useState<Order[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Load orders from localStorage
-    const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]')
-    setOrders(storedOrders)
+    const fetchOrders = async () => {
+      try {
+        const apiOrders = await getOrders()
+        
+        // Map API orders to component format
+        const mappedOrders: Order[] = apiOrders.map((order: ApiOrder) => ({
+          id: order.id.toString(),
+          cargoType: order.cargo_name || 'Unknown',
+          weight: '0 kg', // TODO: Get from cargo details
+          length: '0 cm',
+          width: '0 cm',
+          height: '0 cm',
+          temperature: 'Standard',
+          loadingAddress: order.route_info?.split(' → ')[0] || 'Unknown',
+          unloadingAddress: order.route_info?.split(' → ')[1] || 'Unknown',
+          loadingDate: order.planned_date,
+          unloadingDate: order.planned_date,
+          specialRequirements: '',
+          status: order.status === 'new' ? 'pending' : 
+                 order.status === 'assigned' ? 'matched' : 
+                 order.status === 'in_transit' ? 'in_transit' : 
+                 order.status === 'completed' ? 'completed' : 'pending',
+          createdAt: order.creation_date
+        }))
+
+        setOrders(mappedOrders)
+      } catch (error) {
+        console.error('Failed to fetch orders:', error)
+        // Fallback to localStorage if API fails
+        const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]')
+        setOrders(storedOrders)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchOrders()
   }, [])
 
   const filteredOrders = orders.filter(order =>
@@ -72,6 +108,19 @@ export function Orders() {
     // Store selected order ID and navigate to matching
     sessionStorage.setItem('selectedOrderId', orderId)
     navigate(`/matching?orderId=${orderId}`)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Navbar />
+        <main className="pt-24 pb-12 px-8">
+          <div className="max-w-7xl mx-auto text-center">
+            <p className="text-zinc-400">Loading orders...</p>
+          </div>
+        </main>
+      </div>
+    )
   }
 
   return (
