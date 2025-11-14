@@ -167,3 +167,155 @@ class Holiday(models.Model):
 
     def __str__(self):
         return f"{self.date} - {self.country} - {self.description}"
+
+
+class TransportLaw(models.Model):
+    """Transport Law Regulations by Country"""
+    country = models.CharField(max_length=100, unique=True, verbose_name="Country")
+    
+    # Weight restrictions
+    max_weight_ton = models.FloatField(null=True, blank=True, verbose_name="Max Weight (Ton)")
+    max_weight_special_case = models.CharField(max_length=255, null=True, blank=True, verbose_name="Max Weight Special Case")
+    max_weight_special_value = models.FloatField(null=True, blank=True, verbose_name="Max Weight Special Value")
+    
+    # Length restrictions
+    max_length_m = models.FloatField(null=True, blank=True, verbose_name="Max Length (m)")
+    max_length_special_case = models.CharField(max_length=255, null=True, blank=True, verbose_name="Max Length Special Case")
+    max_length_special_value = models.FloatField(null=True, blank=True, verbose_name="Max Length Special Value")
+    
+    # Width and Height
+    max_width_m = models.FloatField(null=True, blank=True, verbose_name="Max Width (m)")
+    max_height_m = models.FloatField(null=True, blank=True, verbose_name="Max Height (m)")
+    oversize_permit_required = models.BooleanField(default=False, verbose_name="Oversize Permit Required")
+    
+    # Rest and accommodation
+    rest_45h_in_cabin_allowed = models.BooleanField(default=False, verbose_name="Rest 45h In Cabin Allowed")
+    rest_45h_special_note = models.TextField(null=True, blank=True, verbose_name="Rest 45h Special Note")
+    min_hotel_standard = models.CharField(max_length=255, null=True, blank=True, verbose_name="Min Hotel Standard")
+    hotel_invoice_required = models.BooleanField(default=False, verbose_name="Hotel Invoice Required")
+    
+    # Weekend and seasonal bans
+    weekend_driving_ban = models.BooleanField(default=False, verbose_name="Weekend Driving Ban")
+    ban_details = models.TextField(null=True, blank=True, verbose_name="Ban Details")
+    ban_vehicle_type_restriction = models.CharField(max_length=255, null=True, blank=True, verbose_name="Ban Vehicle Type Restriction")
+    ban_season_summer = models.BooleanField(default=False, verbose_name="Ban Season Summer")
+    ban_summer_months = models.CharField(max_length=255, null=True, blank=True, verbose_name="Ban Summer Months")
+    
+    # Emission zones
+    emission_zone_lez = models.BooleanField(default=False, verbose_name="Emission Zone LEZ")
+    emission_zone_cities = models.TextField(null=True, blank=True, verbose_name="Emission Zone Cities")
+    min_euro_class = models.CharField(max_length=50, null=True, blank=True, verbose_name="Min Euro Class")
+    min_euro_class_restriction = models.CharField(max_length=255, null=True, blank=True, verbose_name="Min Euro Class Restriction")
+    lez_details = models.TextField(null=True, blank=True, verbose_name="LEZ Details")
+    
+    # Toll system
+    toll_system = models.CharField(max_length=255, null=True, blank=True, verbose_name="Toll System")
+    toll_system_box_name = models.CharField(max_length=255, null=True, blank=True, verbose_name="Toll System Box Name")
+    toll_payment_method = models.TextField(null=True, blank=True, verbose_name="Toll Payment Method")
+    toll_payment_special_notes = models.TextField(null=True, blank=True, verbose_name="Toll Payment Special Notes")
+    
+    # Tachograph
+    tachograph_type_required = models.CharField(max_length=255, null=True, blank=True, verbose_name="Tachograph Type Required")
+    tachograph_mandatory_from_year = models.IntegerField(null=True, blank=True, verbose_name="Tachograph Mandatory From Year")
+    
+    # Driver CPC
+    driver_cpc_required = models.BooleanField(default=False, verbose_name="Driver CPC Required")
+    driver_cpc_hours = models.IntegerField(null=True, blank=True, verbose_name="Driver CPC Hours")
+    driver_cpc_renewal_years = models.IntegerField(null=True, blank=True, verbose_name="Driver CPC Renewal Years")
+    
+    # A1 Certificate
+    a1_certificate_required = models.BooleanField(default=False, verbose_name="A1 Certificate Required")
+    a1_certificate_notes = models.TextField(null=True, blank=True, verbose_name="A1 Certificate Notes")
+    a1_issuing_authority = models.CharField(max_length=255, null=True, blank=True, verbose_name="A1 Issuing Authority")
+    
+    # Required documents
+    required_documents = models.TextField(null=True, blank=True, verbose_name="Required Documents")
+    
+    # Cabotage
+    cabotage_max_operations = models.IntegerField(null=True, blank=True, verbose_name="Cabotage Max Operations")
+    cabotage_days_limit = models.IntegerField(null=True, blank=True, verbose_name="Cabotage Days Limit")
+    cabotage_cooling_period_days = models.IntegerField(null=True, blank=True, verbose_name="Cabotage Cooling Period Days")
+    
+    # Cross border reporting
+    cross_border_reporting = models.BooleanField(default=False, verbose_name="Cross Border Reporting")
+    cross_border_system = models.CharField(max_length=255, null=True, blank=True, verbose_name="Cross Border System")
+    
+    # Load securing
+    load_securing_standard = models.CharField(max_length=255, null=True, blank=True, verbose_name="Load Securing Standard")
+    
+    # ADR
+    adr_certificate_required = models.BooleanField(default=False, verbose_name="ADR Certificate Required")
+    adr_renewal_years = models.IntegerField(null=True, blank=True, verbose_name="ADR Renewal Years")
+    adr_tunnel_restrictions_categories = models.CharField(max_length=255, null=True, blank=True, verbose_name="ADR Tunnel Restrictions Categories")
+    
+    # Insurance
+    vehicle_insurance_liability = models.CharField(max_length=255, null=True, blank=True, verbose_name="Vehicle Insurance Liability")
+    cargo_insurance_mandatory = models.BooleanField(default=False, verbose_name="Cargo Insurance Mandatory")
+    cargo_insurance_special_note = models.TextField(null=True, blank=True, verbose_name="Cargo Insurance Special Note")
+    
+    # Winter tires
+    winter_tires_required = models.BooleanField(default=False, verbose_name="Winter Tires Required")
+    winter_tires_period_start = models.CharField(max_length=50, null=True, blank=True, verbose_name="Winter Tires Period Start")
+    winter_tires_period_end = models.CharField(max_length=50, null=True, blank=True, verbose_name="Winter Tires Period End")
+    winter_tires_min_tread_mm = models.FloatField(null=True, blank=True, verbose_name="Winter Tires Min Tread (mm)")
+    winter_tires_special_type = models.CharField(max_length=255, null=True, blank=True, verbose_name="Winter Tires Special Type")
+    winter_tires_special_value_mm = models.FloatField(null=True, blank=True, verbose_name="Winter Tires Special Value (mm)")
+    snow_chains_required = models.BooleanField(default=False, verbose_name="Snow Chains Required")
+    
+    # Speed limits
+    speed_limit_urban_kmh = models.IntegerField(null=True, blank=True, verbose_name="Speed Limit Urban (km/h)")
+    speed_limit_urban_special_time = models.CharField(max_length=255, null=True, blank=True, verbose_name="Speed Limit Urban Special Time")
+    speed_limit_urban_special_value = models.FloatField(null=True, blank=True, verbose_name="Speed Limit Urban Special Value")
+    speed_limit_rural_kmh = models.IntegerField(null=True, blank=True, verbose_name="Speed Limit Rural (km/h)")
+    speed_limit_rural_vehicle_type = models.CharField(max_length=255, null=True, blank=True, verbose_name="Speed Limit Rural Vehicle Type")
+    speed_limit_rural_special_value = models.FloatField(null=True, blank=True, verbose_name="Speed Limit Rural Special Value")
+    speed_limit_expressway_kmh = models.IntegerField(null=True, blank=True, verbose_name="Speed Limit Expressway (km/h)")
+    speed_limit_expressway_special_type = models.CharField(max_length=255, null=True, blank=True, verbose_name="Speed Limit Expressway Special Type")
+    speed_limit_expressway_special_value = models.FloatField(null=True, blank=True, verbose_name="Speed Limit Expressway Special Value")
+    speed_limit_highway_kmh = models.IntegerField(null=True, blank=True, verbose_name="Speed Limit Highway (km/h)")
+    speed_limit_highway_special_type = models.CharField(max_length=255, null=True, blank=True, verbose_name="Speed Limit Highway Special Type")
+    speed_limit_highway_special_value = models.FloatField(null=True, blank=True, verbose_name="Speed Limit Highway Special Value")
+    
+    # Alcohol limit
+    alcohol_limit_commercial_g_l = models.FloatField(null=True, blank=True, verbose_name="Alcohol Limit Commercial (g/L)")
+    alcohol_limit_special_type = models.CharField(max_length=255, null=True, blank=True, verbose_name="Alcohol Limit Special Type")
+    alcohol_limit_special_value = models.FloatField(null=True, blank=True, verbose_name="Alcohol Limit Special Value")
+    
+    # Overtaking and parking
+    overtaking_ban_exists = models.BooleanField(default=False, verbose_name="Overtaking Ban Exists")
+    overtaking_ban_details = models.TextField(null=True, blank=True, verbose_name="Overtaking Ban Details")
+    parking_shortage_issue = models.BooleanField(default=False, verbose_name="Parking Shortage Issue")
+    parking_shortage_level = models.CharField(max_length=255, null=True, blank=True, verbose_name="Parking Shortage Level")
+    
+    # Equipment
+    equipment_item_1 = models.CharField(max_length=255, null=True, blank=True, verbose_name="Equipment Item 1")
+    equipment_item_2 = models.CharField(max_length=255, null=True, blank=True, verbose_name="Equipment Item 2")
+    equipment_item_3 = models.CharField(max_length=255, null=True, blank=True, verbose_name="Equipment Item 3")
+    equipment_item_4 = models.CharField(max_length=255, null=True, blank=True, verbose_name="Equipment Item 4")
+    equipment_item_5 = models.CharField(max_length=255, null=True, blank=True, verbose_name="Equipment Item 5")
+    equipment_special_item = models.CharField(max_length=255, null=True, blank=True, verbose_name="Equipment Special Item")
+    equipment_special_quantity = models.FloatField(null=True, blank=True, verbose_name="Equipment Special Quantity")
+    
+    # Penalties
+    penalty_min_value = models.FloatField(null=True, blank=True, verbose_name="Penalty Min Value")
+    penalty_min_currency = models.CharField(max_length=10, null=True, blank=True, verbose_name="Penalty Min Currency")
+    penalty_max_value = models.FloatField(null=True, blank=True, verbose_name="Penalty Max Value")
+    penalty_max_currency = models.CharField(max_length=10, null=True, blank=True, verbose_name="Penalty Max Currency")
+    
+    # Posting declaration
+    posting_declaration_required = models.BooleanField(default=False, verbose_name="Posting Declaration Required")
+    posting_declaration_portal = models.CharField(max_length=255, null=True, blank=True, verbose_name="Posting Declaration Portal")
+    posting_declaration_extra_notes = models.TextField(null=True, blank=True, verbose_name="Posting Declaration Extra Notes")
+    
+    # Additional notes and references
+    notes = models.TextField(null=True, blank=True, verbose_name="Notes")
+    law_reference_url = models.URLField(null=True, blank=True, verbose_name="Law Reference URL")
+    
+    class Meta:
+        db_table = 'transport_laws'
+        verbose_name = 'Transport Law'
+        verbose_name_plural = 'Transport Laws'
+        ordering = ['country']
+    
+    def __str__(self):
+        return self.country

@@ -3,12 +3,12 @@ from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from django.db.models import Q, Count, Avg
 from datetime import datetime, timedelta
-from .models import User, Vehicle, Route, Cargo, Order, Tracker, Holiday
+from .models import User, Vehicle, Route, Cargo, Order, Tracker, Holiday, TransportLaw
 from .serializers import (
     UserSerializer, VehicleSerializer, RouteSerializer, CargoSerializer,
     OrderSerializer, OrderCreateSerializer, TrackerSerializer, HolidaySerializer,
     OrderAssignmentSerializer, VehicleAvailabilitySerializer, DriverAvailabilitySerializer,
-    RouteOptimizationSerializer, ProfitCalculationSerializer
+    RouteOptimizationSerializer, ProfitCalculationSerializer, TransportLawSerializer
 )
 
 
@@ -586,3 +586,39 @@ def dashboard_stats(request):
             'total': User.objects.count()
         }
     })
+
+
+class TransportLawViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for viewing transport law regulations by country
+    Read-only as these are reference data imported from CSV
+    """
+    queryset = TransportLaw.objects.all()
+    serializer_class = TransportLawSerializer
+    lookup_field = 'country'
+    
+    @action(detail=False, methods=['get'])
+    def by_country(self, request):
+        """Get transport law by country name (case-insensitive)"""
+        country = request.query_params.get('country', '').strip()
+        if not country:
+            return Response(
+                {'error': 'Country parameter is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            law = TransportLaw.objects.get(country__iexact=country)
+            serializer = self.get_serializer(law)
+            return Response(serializer.data)
+        except TransportLaw.DoesNotExist:
+            return Response(
+                {'error': f'Transport law not found for country: {country}'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    @action(detail=False, methods=['get'])
+    def countries(self, request):
+        """Get list of all available countries"""
+        countries = TransportLaw.objects.values_list('country', flat=True).order_by('country')
+        return Response({'countries': list(countries)})
