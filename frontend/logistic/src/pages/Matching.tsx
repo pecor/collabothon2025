@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Truck, ArrowLeft, Sparkles, Eye, EyeOff, User, Package } from 'lucide-react'
+import { Sparkles, Eye, EyeOff, User, Package } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Navbar } from '@/components/layout'
 
 interface TruckerMatch {
   id: string
@@ -222,16 +223,16 @@ export function Matching() {
   }
 
   const getScoreBadge = (score: number) => {
-    if (score >= 90) return { text: 'IDEALNY', color: 'bg-green-600 text-white' }
-    if (score >= 75) return { text: 'BARDZO DOBRY', color: 'bg-blue-600 text-white' }
-    if (score >= 60) return { text: 'AKCEPTOWALNY', color: 'bg-yellow-600 text-black' }
-    return { text: 'NIE POLECANY', color: 'bg-red-600 text-white' }
+    if (score >= 90) return { text: 'PERFECT', color: 'bg-green-600 text-white' }
+    if (score >= 75) return { text: 'VERY GOOD', color: 'bg-blue-600 text-white' }
+    if (score >= 60) return { text: 'ACCEPTABLE', color: 'bg-yellow-600 text-black' }
+    return { text: 'NOT RECOMMENDED', color: 'bg-red-600 text-white' }
   }
 
   const handleSelectMatch = (match: TruckerMatch) => {
     const orderId = searchParams.get('orderId')
     if (!orderId || !currentOrder) {
-      alert('Brak danych zlecenia!')
+      alert('No order data!')
       return
     }
 
@@ -259,59 +260,22 @@ export function Matching() {
     localStorage.setItem('orders', JSON.stringify(updatedOrders))
     
     // Show success message and redirect
-    alert(`✅ Zlecenie dopasowane!\n\nKierowca: ${match.driver.name}\nPojazd: ${match.vehicle.name}\nDopasowanie: ${match.score}%`)
+    alert(`✅ Order Matched!\n\nDriver: ${match.driver.name}\nVehicle: ${match.vehicle.name}\nMatch: ${match.score}%`)
     navigate('/orders')
   }
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-zinc-800 bg-black/80 backdrop-blur-sm">
-        <div className="w-full px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="border-zinc-700 text-white hover:bg-zinc-900"
-              onClick={() => navigate('/add-order')}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-              <div className="bg-red-600 p-2 rounded-lg">
-                <Truck className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">TruckAI</h1>
-                <p className="text-xs text-zinc-500">Dopasowanie AI</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Button 
-              variant="outline"
-              className="border-zinc-700 text-white hover:bg-zinc-900"
-              onClick={() => navigate('/fleet')}
-            >
-              Zobacz całą flotę
-            </Button>
-            <Button 
-              className="bg-red-600 hover:bg-red-700 text-white"
-              onClick={() => navigate('/route')}
-            >
-              Zobacz trasę
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="pt-24 pb-12 px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-3 mb-3">
             <Sparkles className="h-8 w-8 text-red-500" />
-            <h2 className="text-4xl font-bold text-white">Dopasowani Truckerzy</h2>
+            <h2 className="text-4xl font-bold text-white">Matched Truckers</h2>
           </div>
           <p className="text-zinc-400 text-lg mb-8">
-            Najlepsze zestawy pojazd + kierowca dla Twojego zlecenia • Znaleziono {allMatches.length} dopasowań
+            Best vehicle + driver combinations for your order • Found {allMatches.length} matches
           </p>
 
           {/* Current Order Info */}
@@ -323,19 +287,19 @@ export function Matching() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-white text-xl font-bold mb-2">
-                    Zlecenie: {currentOrder.cargoType || 'Bez opisu'}
+                    Order: {currentOrder.cargoType || 'No description'}
                   </h3>
                   <div className="grid md:grid-cols-3 gap-4 text-sm">
                     <div>
-                      <span className="text-red-300">Trasa:</span>
+                      <span className="text-red-300">Route:</span>
                       <p className="text-white font-medium">{currentOrder.loadingAddress} → {currentOrder.unloadingAddress}</p>
                     </div>
                     <div>
-                      <span className="text-red-300">Waga:</span>
+                      <span className="text-red-300">Weight:</span>
                       <p className="text-white font-medium">{currentOrder.weight} kg</p>
                     </div>
                     <div>
-                      <span className="text-red-300">Wymiary:</span>
+                      <span className="text-red-300">Dimensions:</span>
                       <p className="text-white font-medium">{currentOrder.length} × {currentOrder.width} × {currentOrder.height} cm</p>
                     </div>
                   </div>
@@ -347,19 +311,19 @@ export function Matching() {
           {/* Stats Summary */}
           <div className="grid grid-cols-4 gap-4 mb-8">
             <div className="bg-green-900/20 border border-green-800 rounded-lg p-4">
-              <p className="text-green-400 text-sm mb-1">Idealny match</p>
+              <p className="text-green-400 text-sm mb-1">Perfect match</p>
               <p className="text-white text-2xl font-bold">{allMatches.filter(m => m.score >= 90).length}</p>
             </div>
             <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4">
-              <p className="text-blue-400 text-sm mb-1">Bardzo dobry</p>
+              <p className="text-blue-400 text-sm mb-1">Very good</p>
               <p className="text-white text-2xl font-bold">{allMatches.filter(m => m.score >= 75 && m.score < 90).length}</p>
             </div>
             <div className="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4">
-              <p className="text-yellow-400 text-sm mb-1">Akceptowalny</p>
+              <p className="text-yellow-400 text-sm mb-1">Acceptable</p>
               <p className="text-white text-2xl font-bold">{allMatches.filter(m => m.score >= 60 && m.score < 75).length}</p>
             </div>
             <div className="bg-red-900/20 border border-red-800 rounded-lg p-4">
-              <p className="text-red-400 text-sm mb-1">Niska zgodność</p>
+              <p className="text-red-400 text-sm mb-1">Low match</p>
               <p className="text-white text-2xl font-bold">{lowMatches.length}</p>
             </div>
           </div>
@@ -375,12 +339,12 @@ export function Matching() {
                 {showLowMatches ? (
                   <>
                     <EyeOff className="h-4 w-4 mr-2" />
-                    Ukryj niskie dopasowania
+                    Hide low matches
                   </>
                 ) : (
                   <>
                     <Eye className="h-4 w-4 mr-2" />
-                    Pokaż wszystkie ({lowMatches.length} ukrytych)
+                    Show all ({lowMatches.length} hidden)
                   </>
                 )}
               </Button>
@@ -406,13 +370,13 @@ export function Matching() {
                       <div>
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="text-2xl font-bold text-white">
-                            {match.score}% Dopasowanie
+                            {match.score}% Match
                           </h3>
                           <span className={`px-3 py-1 rounded-full text-xs font-bold ${badge.color}`}>
                             {badge.text}
                           </span>
                         </div>
-                        <p className="text-zinc-400">Szacowany zysk: <span className="text-green-400 font-bold">{match.profit} PLN</span> • Koszt: {match.cost} PLN • ETA: {match.eta}</p>
+                        <p className="text-zinc-400">Estimated profit: <span className="text-green-400 font-bold">{match.profit} PLN</span> • Cost: {match.cost} PLN • ETA: {match.eta}</p>
                       </div>
                     </div>
                   </div>
@@ -430,15 +394,15 @@ export function Matching() {
                       </div>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-zinc-400">Typ:</span>
+                          <span className="text-zinc-400">Type:</span>
                           <span className="text-white font-medium">{match.vehicle.type}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-zinc-400">Ładowność:</span>
+                          <span className="text-zinc-400">Capacity:</span>
                           <span className="text-white font-medium">{match.vehicle.capacity} kg</span>
                         </div>
                         <div className="mt-3">
-                          <span className="text-zinc-400 text-xs block mb-2">Cechy:</span>
+                          <span className="text-zinc-400 text-xs block mb-2">Features:</span>
                           <div className="flex flex-wrap gap-2">
                             {match.vehicle.features.map((feat, i) => (
                               <span key={i} className="px-2 py-1 bg-zinc-800 rounded text-xs text-zinc-300">
@@ -456,17 +420,17 @@ export function Matching() {
                         <User className="h-6 w-6 text-red-500" />
                         <div>
                           <h4 className="text-white font-bold text-lg">{match.driver.name}</h4>
-                          <p className="text-zinc-400 text-sm">{match.driver.experience} lat doświadczenia</p>
+                          <p className="text-zinc-400 text-sm">{match.driver.experience} years experience</p>
                         </div>
                       </div>
                       <div className="space-y-2 text-sm mb-3">
                         <div className="flex justify-between">
-                          <span className="text-zinc-400">Ocena:</span>
+                          <span className="text-zinc-400">Rating:</span>
                           <span className="text-white font-medium">⭐ {match.driver.rating.toFixed(1)} / 5.0</span>
                         </div>
                       </div>
                       <div>
-                        <span className="text-zinc-400 text-xs block mb-2">Uprawnienia:</span>
+                        <span className="text-zinc-400 text-xs block mb-2">Licenses:</span>
                         <div className="flex flex-wrap gap-2">
                           {match.driver.licenses.map((lic, i) => (
                             <span key={i} className="px-2 py-1 bg-zinc-800 rounded text-xs text-zinc-300 font-medium">
@@ -482,7 +446,7 @@ export function Matching() {
                   <div className="bg-black/30 rounded-lg p-5 border border-zinc-700">
                     <h5 className="text-white font-semibold mb-3 flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-red-500" />
-                      Dlaczego ten zestaw?
+                      Why this combination?
                     </h5>
                     <ul className="space-y-2">
                       {match.reasons.map((reason, i) => (
@@ -501,7 +465,7 @@ export function Matching() {
                       size="lg"
                       onClick={() => handleSelectMatch(match)}
                     >
-                      Wybierz ten zestaw
+                      Select this combination
                     </Button>
                     <Button 
                       variant="outline"
@@ -509,7 +473,7 @@ export function Matching() {
                       size="lg"
                       onClick={() => navigate(`/route?orderId=${searchParams.get('orderId')}`)}
                     >
-                      Zobacz trasę
+                      View Route
                     </Button>
                   </div>
                 </div>
@@ -520,14 +484,14 @@ export function Matching() {
           {!showLowMatches && lowMatches.length > 0 && (
             <div className="mt-8 p-6 bg-zinc-900 border border-zinc-800 rounded-lg text-center">
               <p className="text-zinc-400 mb-3">
-                Ukryto {lowMatches.length} dopasowań z niską zgodnością (&lt;60%)
+                Hidden {lowMatches.length} matches with low compatibility (&lt;60%)
               </p>
               <Button
                 variant="outline"
                 className="border-zinc-700 text-white hover:bg-zinc-900"
                 onClick={() => setShowLowMatches(true)}
               >
-                Pokaż wszystkie dopasowania
+                Show all matches
               </Button>
             </div>
           )}

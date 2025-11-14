@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Truck, ArrowLeft, Package, MapPin, Calendar, Weight, Plus, Search } from 'lucide-react'
+import { Package, MapPin, Calendar, Weight, Plus, Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { Navbar } from '@/components/layout'
 
 interface Order {
   id: string
@@ -55,13 +56,13 @@ export function Orders() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'Oczekuje na dopasowanie'
+        return 'Awaiting match'
       case 'matched':
-        return 'Dopasowano kierowcę'
+        return 'Driver matched'
       case 'in_transit':
-        return 'W transporcie'
+        return 'In transit'
       case 'completed':
-        return 'Zakończone'
+        return 'Completed'
       default:
         return status
     }
@@ -75,76 +76,53 @@ export function Orders() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-zinc-800 bg-black/80 backdrop-blur-sm">
-        <div className="w-full px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Button
-              variant="outline"
-              size="icon"
-              className="border-zinc-700 text-white hover:bg-zinc-900"
-              onClick={() => navigate('/')}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div 
-              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => navigate('/')}
-            >
-              <div className="bg-red-600 p-2 rounded-lg">
-                <Truck className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">TruckAI</h1>
-                <p className="text-xs text-zinc-500">Lista zleceń</p>
-              </div>
-            </div>
-          </div>
-          <Button 
-            className="bg-red-600 hover:bg-red-700 text-white"
-            onClick={() => navigate('/add-order')}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Dodaj zlecenie
-          </Button>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main Content */}
       <main className="pt-24 pb-12 px-8">
         <div className="max-w-7xl mx-auto">
           {/* Page Title */}
-          <div className="mb-8">
-            <h2 className="text-4xl font-bold text-white mb-3">
-              Lista Zleceń
-            </h2>
-            <p className="text-zinc-400 text-lg">
-              Kliknij na zlecenie, aby dopasować kierowcę i pojazd
-            </p>
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h2 className="text-4xl font-bold text-white mb-3">
+                Orders List
+              </h2>
+              <p className="text-zinc-400 text-lg">
+                Click on an order to match driver and vehicle
+              </p>
+            </div>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              size="lg"
+              onClick={() => navigate('/add-order')}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Order
+            </Button>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-4 gap-4 mb-8">
             <div className="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4">
-              <p className="text-yellow-400 text-sm mb-1">Oczekujące</p>
+              <p className="text-yellow-400 text-sm mb-1">Pending</p>
               <p className="text-white text-2xl font-bold">
                 {orders.filter(o => o.status === 'pending').length}
               </p>
             </div>
             <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4">
-              <p className="text-blue-400 text-sm mb-1">Dopasowane</p>
+              <p className="text-blue-400 text-sm mb-1">Matched</p>
               <p className="text-white text-2xl font-bold">
                 {orders.filter(o => o.status === 'matched').length}
               </p>
             </div>
             <div className="bg-green-900/20 border border-green-800 rounded-lg p-4">
-              <p className="text-green-400 text-sm mb-1">W transporcie</p>
+              <p className="text-green-400 text-sm mb-1">In Transit</p>
               <p className="text-white text-2xl font-bold">
                 {orders.filter(o => o.status === 'in_transit').length}
               </p>
             </div>
             <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4">
-              <p className="text-zinc-400 text-sm mb-1">Wszystkie</p>
+              <p className="text-zinc-400 text-sm mb-1">All Orders</p>
               <p className="text-white text-2xl font-bold">{orders.length}</p>
             </div>
           </div>
@@ -155,7 +133,7 @@ export function Orders() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               <input
                 type="text"
-                placeholder="Szukaj po typie ładunku, adresie..."
+                placeholder="Search by cargo type, address..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-10 pr-4 py-3 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
@@ -168,17 +146,17 @@ export function Orders() {
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
               <Package className="h-16 w-16 text-zinc-600 mx-auto mb-4" />
               <h3 className="text-white text-xl font-semibold mb-2">
-                Brak zleceń
+                No Orders
               </h3>
               <p className="text-zinc-400 mb-6">
-                Dodaj pierwsze zlecenie, aby rozpocząć dopasowanie kierowców
+                Add your first order to start matching drivers
               </p>
               <Button
                 className="bg-red-600 hover:bg-red-700 text-white"
                 onClick={() => navigate('/add-order')}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Dodaj zlecenie
+                Add Order
               </Button>
             </div>
           ) : (
@@ -204,7 +182,7 @@ export function Orders() {
                           </span>
                         </div>
                         <p className="text-zinc-500 text-sm">
-                          Dodano: {new Date(order.createdAt).toLocaleString('pl-PL')}
+                          Added: {new Date(order.createdAt).toLocaleString('en-US')}
                         </p>
                       </div>
                     </div>
@@ -216,7 +194,7 @@ export function Orders() {
                         handleOrderClick(order.id)
                       }}
                     >
-                      Dopasuj kierowcę
+                      Match Driver
                     </Button>
                   </div>
 
@@ -225,10 +203,10 @@ export function Orders() {
                     <div className="bg-zinc-800/50 rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <MapPin className="h-4 w-4 text-green-500" />
-                        <span className="text-zinc-400 text-xs">Trasa</span>
+                        <span className="text-zinc-400 text-xs">Route</span>
                       </div>
                       <p className="text-white text-sm font-medium">
-                        {order.loadingAddress || 'Brak'} → {order.unloadingAddress || 'Brak'}
+                        {order.loadingAddress || 'N/A'} → {order.unloadingAddress || 'N/A'}
                       </p>
                     </div>
 
@@ -236,10 +214,10 @@ export function Orders() {
                     <div className="bg-zinc-800/50 rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Weight className="h-4 w-4 text-blue-500" />
-                        <span className="text-zinc-400 text-xs">Waga</span>
+                        <span className="text-zinc-400 text-xs">Weight</span>
                       </div>
                       <p className="text-white text-sm font-medium">
-                        {order.weight ? `${order.weight} kg` : 'Nie podano'}
+                        {order.weight ? `${order.weight} kg` : 'Not specified'}
                       </p>
                     </div>
 
@@ -247,26 +225,26 @@ export function Orders() {
                     <div className="bg-zinc-800/50 rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Calendar className="h-4 w-4 text-yellow-500" />
-                        <span className="text-zinc-400 text-xs">Załadunek</span>
+                        <span className="text-zinc-400 text-xs">Loading</span>
                       </div>
                       <p className="text-white text-sm font-medium">
-                        {order.loadingDate ? new Date(order.loadingDate).toLocaleString('pl-PL', { 
+                        {order.loadingDate ? new Date(order.loadingDate).toLocaleString('en-US', { 
                           day: '2-digit', 
                           month: '2-digit', 
                           hour: '2-digit', 
                           minute: '2-digit' 
-                        }) : 'Nie podano'}
+                        }) : 'Not specified'}
                       </p>
                     </div>
 
                     {/* Special Requirements */}
                     <div className="bg-zinc-800/50 rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
-                        <Truck className="h-4 w-4 text-red-500" />
-                        <span className="text-zinc-400 text-xs">Wymagania</span>
+                        <Package className="h-4 w-4 text-red-500" />
+                        <span className="text-zinc-400 text-xs">Requirements</span>
                       </div>
                       <p className="text-white text-sm font-medium">
-                        {order.specialRequirements || 'Brak'}
+                        {order.specialRequirements || 'None'}
                       </p>
                     </div>
                   </div>

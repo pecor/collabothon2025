@@ -2,83 +2,40 @@ import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Truck, Clock, TrendingUp, Shield, Zap, BarChart3 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { Navbar } from '@/components/layout'
 
 export function Home() {
   const navigate = useNavigate()
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header - Fixed */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-zinc-800 bg-black/80 backdrop-blur-sm">
-        <div className="w-full px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-red-600 p-2 rounded-lg">
-              <Truck className="h-7 w-7 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-white">TruckAI</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/orders')}
-            >
-              Zlecenia
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/fleet')}
-            >
-              Flota
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/dashboard')}
-            >
-              Dashboard
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/docs')}
-            >
-              API Docs
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Hero Section - Full Width */}
       <section className="pt-32 pb-20 px-8 bg-gradient-to-b from-black via-zinc-900 to-black">
         <div className="max-w-6xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-full text-sm font-medium mb-8">
             <Zap className="h-4 w-4 text-red-500" />
-            <span className="text-zinc-300">Inteligentny system doboru zleceń transportowych</span>
+            <span className="text-zinc-300">Intelligent Transport Order Matching System</span>
           </div>
           
           <h2 className="text-6xl md:text-7xl font-bold text-white mb-8 leading-tight">
-            Automatyzacja logistyki
-            <span className="text-red-600"> z mocą AI</span>
+            Logistics Automation
+            <span className="text-red-600"> Powered by AI</span>
           </h2>
           
           <p className="text-xl text-zinc-400 mb-12 max-w-3xl mx-auto leading-relaxed">
-            TruckAI automatycznie dobiera najlepszy zestaw kierowca-pojazd-zlecenie, 
-            maksymalizując zysk i przewidując wszystkie ograniczenia prawne w sekundach.
+            TruckAI automatically matches the best driver-vehicle-order combination, 
+            maximizing profit and predicting all legal constraints in seconds.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg" 
               className="bg-red-600 hover:bg-red-700 text-white text-lg h-14 px-10 border-0"
-              onClick={() => navigate('/add-order')}
+              onClick={() => navigate('/orders')}
             >
-              Rozpocznij dobieranie zlecenia
+              View Demo
               <Truck className="ml-2 h-5 w-5" />
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="border-zinc-700 text-white hover:bg-zinc-900 text-lg h-14 px-10"
-              onClick={() => navigate('/add-order')}
-            >
-              Zobacz demo
             </Button>
           </div>
         </div>
@@ -95,7 +52,7 @@ export function Home() {
                 </div>
                 <CardTitle className="text-4xl text-white">80%</CardTitle>
                 <CardDescription className="text-lg text-zinc-400">
-                  Krótszy czas obsługi zlecenia
+                  Faster order processing time
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -107,7 +64,7 @@ export function Home() {
                 </div>
                 <CardTitle className="text-4xl text-white">15-25%</CardTitle>
                 <CardDescription className="text-lg text-zinc-400">
-                  Wyższe marże na tej samej flocie
+                  Higher margins on same fleet
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -119,7 +76,7 @@ export function Home() {
                 </div>
                 <CardTitle className="text-4xl text-white">100%</CardTitle>
                 <CardDescription className="text-lg text-zinc-400">
-                  Zgodność z przepisami - zero pomyłek
+                  Legal compliance - zero errors
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -131,7 +88,7 @@ export function Home() {
       <section className="py-20 px-8 bg-black">
         <div className="max-w-7xl mx-auto">
           <h3 className="text-4xl md:text-5xl font-bold text-center text-white mb-16">
-            Jak działa TruckAI?
+            How TruckAI Works?
           </h3>
           
           <div className="grid md:grid-cols-2 gap-6">
@@ -140,10 +97,10 @@ export function Home() {
                 <div className="bg-zinc-800 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
                   <Zap className="h-6 w-6 text-red-500" />
                 </div>
-                <CardTitle className="text-white text-xl">Automatyczny dobór zleceń</CardTitle>
+                <CardTitle className="text-white text-xl">Automatic Order Matching</CardTitle>
                 <CardDescription className="text-base text-zinc-400 leading-relaxed">
-                  AI analizuje wymagania ładunku, parametry pojazdów, uprawnienia kierowców 
-                  i warunki prawne - wszystko w czasie rzeczywistym.
+                  AI analyzes cargo requirements, vehicle parameters, driver licenses, 
+                  and legal conditions - all in real-time.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -153,10 +110,10 @@ export function Home() {
                 <div className="bg-zinc-800 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
                   <TrendingUp className="h-6 w-6 text-red-500" />
                 </div>
-                <CardTitle className="text-white text-xl">Maksymalizacja zysku</CardTitle>
+                <CardTitle className="text-white text-xl">Profit Maximization</CardTitle>
                 <CardDescription className="text-base text-zinc-400 leading-relaxed">
-                  Algorytm wylicza przewidywany zysk biorąc pod uwagę dystans, koszty paliwa, 
-                  specyfikę zlecenia i obłożenie floty.
+                  Algorithm calculates predicted profit considering distance, fuel costs, 
+                  order specifics, and fleet utilization.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -166,10 +123,10 @@ export function Home() {
                 <div className="bg-zinc-800 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
                   <Shield className="h-6 w-6 text-red-500" />
                 </div>
-                <CardTitle className="text-white text-xl">Walidator wymagań</CardTitle>
+                <CardTitle className="text-white text-xl">Requirements Validator</CardTitle>
                 <CardDescription className="text-base text-zinc-400 leading-relaxed">
-                  Automatyczna weryfikacja uprawnień (C, C+E, ADR), typu pojazdu, wymagań 
-                  chłodni oraz krajowych ograniczeń w czasie świąt.
+                  Automatic verification of licenses (C, C+E, ADR), vehicle type, refrigeration 
+                  requirements, and national holiday restrictions.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -179,10 +136,10 @@ export function Home() {
                 <div className="bg-zinc-800 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
                   <BarChart3 className="h-6 w-6 text-red-500" />
                 </div>
-                <CardTitle className="text-white text-xl">Tracking i Analytics</CardTitle>
+                <CardTitle className="text-white text-xl">Tracking & Analytics</CardTitle>
                 <CardDescription className="text-base text-zinc-400 leading-relaxed">
-                  Monitoring na żywo, dynamiczne ETA, automatyczne generowanie raportów 
-                  wydajności i rankingu kierowców.
+                  Live monitoring, dynamic ETA, automatic generation of performance reports 
+                  and driver rankings.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -194,18 +151,18 @@ export function Home() {
       <section className="py-24 px-8 bg-gradient-to-r from-red-950 via-red-900 to-red-950">
         <div className="max-w-5xl mx-auto text-center">
           <h3 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-            Gotowy na automatyzację?
+            Ready for Automation?
           </h3>
           <p className="text-red-100 text-xl mb-10 max-w-3xl mx-auto leading-relaxed">
-            Zamień zlecenia w czysty zysk - bez utraty kontroli nad flotą, 
-            bez ręcznej roboty, z mocą sztucznej inteligencji.
+            Turn orders into pure profit - without losing fleet control, 
+            without manual work, with the power of artificial intelligence.
           </p>
           <Button 
             size="lg" 
             className="bg-white text-red-900 hover:bg-zinc-100 text-lg h-14 px-10 font-semibold"
-            onClick={() => navigate('/add-order')}
+            onClick={() => navigate('/orders')}
           >
-            Wybierz zlecenie do optymalizacji
+            View Demo
             <Truck className="ml-2 h-5 w-5" />
           </Button>
         </div>

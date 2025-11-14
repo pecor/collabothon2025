@@ -64,23 +64,23 @@ export function OrderForm() {
       <CardHeader>
         <CardTitle className="text-white text-2xl flex items-center gap-2">
           <Package className="h-6 w-6 text-red-500" />
-          Parametry zlecenia
+          Order Parameters
         </CardTitle>
         <CardDescription className="text-zinc-400">
-          Wprowadź szczegóły transportu
+          Enter transport details
         </CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-6">
         {/* Cargo Details */}
         <div className="space-y-4">
-          <h3 className="text-white font-semibold text-lg">Typ towaru</h3>
+          <h3 className="text-white font-semibold text-lg">Cargo Type</h3>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="text-zinc-400 text-sm block mb-2">Rodzaj ładunku</label>
+              <label className="text-zinc-400 text-sm block mb-2">Cargo Type</label>
               <input
                 type="text"
-                placeholder="np. Palety, Kartony, Chemia"
+                placeholder="e.g. Pallets, Boxes, Chemicals"
                 value={formData.cargoType}
                 onChange={(e) => handleChange('cargoType', e.target.value)}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
@@ -89,11 +89,11 @@ export function OrderForm() {
             <div>
               <label className="text-zinc-400 text-sm block mb-2 flex items-center gap-2">
                 <Weight className="h-4 w-4" />
-                Waga (kg)
+                Weight (kg)
               </label>
               <input
                 type="number"
-                placeholder="np. 1500"
+                placeholder="e.g. 1500"
                 value={formData.weight}
                 onChange={(e) => handleChange('weight', e.target.value)}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
@@ -106,34 +106,34 @@ export function OrderForm() {
         <div className="space-y-4">
           <h3 className="text-white font-semibold text-lg flex items-center gap-2">
             <Ruler className="h-5 w-5 text-red-500" />
-            Wymiary (cm)
+            Dimensions (cm)
           </h3>
           <div className="grid md:grid-cols-3 gap-4">
             <div>
-              <label className="text-zinc-400 text-sm block mb-2">Długość</label>
+              <label className="text-zinc-400 text-sm block mb-2">Length</label>
               <input
                 type="number"
-                placeholder="np. 240"
+                placeholder="e.g. 240"
                 value={formData.length}
                 onChange={(e) => handleChange('length', e.target.value)}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
               />
             </div>
             <div>
-              <label className="text-zinc-400 text-sm block mb-2">Szerokość</label>
+              <label className="text-zinc-400 text-sm block mb-2">Width</label>
               <input
                 type="number"
-                placeholder="np. 120"
+                placeholder="e.g. 120"
                 value={formData.width}
                 onChange={(e) => handleChange('width', e.target.value)}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
               />
             </div>
             <div>
-              <label className="text-zinc-400 text-sm block mb-2">Wysokość</label>
+              <label className="text-zinc-400 text-sm block mb-2">Height</label>
               <input
                 type="number"
-                placeholder="np. 180"
+                placeholder="e.g. 180"
                 value={formData.height}
                 onChange={(e) => handleChange('height', e.target.value)}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
@@ -146,24 +146,24 @@ export function OrderForm() {
         <div className="space-y-4">
           <h3 className="text-white font-semibold text-lg flex items-center gap-2">
             <Thermometer className="h-5 w-5 text-red-500" />
-            Warunki transportu
+            Transport Conditions
           </h3>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="text-zinc-400 text-sm block mb-2">Temperatura (°C)</label>
+              <label className="text-zinc-400 text-sm block mb-2">Temperature (°C)</label>
               <input
                 type="text"
-                placeholder="np. -18 do -20 lub 'Ambient'"
+                placeholder="e.g. -18 to -20 or 'Ambient'"
                 value={formData.temperature}
                 onChange={(e) => handleChange('temperature', e.target.value)}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
               />
             </div>
             <div>
-              <label className="text-zinc-400 text-sm block mb-2">Wymagania specjalne</label>
+              <label className="text-zinc-400 text-sm block mb-2">Special Requirements</label>
               <input
                 type="text"
-                placeholder="np. ADR, Wózek widłowy, Plandeka"
+                placeholder="e.g. ADR, Forklift, Tarpaulin"
                 value={formData.specialRequirements}
                 onChange={(e) => handleChange('specialRequirements', e.target.value)}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
@@ -174,20 +174,20 @@ export function OrderForm() {
 
         {/* Addresses */}
         <div className="space-y-4">
-          <h3 className="text-white font-semibold text-lg">Załadunek / Rozładunek</h3>
+          <h3 className="text-white font-semibold text-lg">Loading / Unloading</h3>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="text-zinc-400 text-sm block mb-2">Adres załadunku</label>
+              <label className="text-zinc-400 text-sm block mb-2">Loading Address</label>
               <input
                 type="text"
-                placeholder="np. Warszawa, ul. Transportowa 1"
+                placeholder="e.g. Warsaw, Transport St. 1"
                 value={formData.loadingAddress}
                 onChange={(e) => handleChange('loadingAddress', e.target.value)}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
               />
             </div>
             <div>
-              <label className="text-zinc-400 text-sm block mb-2">Data załadunku</label>
+              <label className="text-zinc-400 text-sm block mb-2">Loading Date</label>
               <input
                 type="datetime-local"
                 value={formData.loadingDate}
@@ -196,17 +196,17 @@ export function OrderForm() {
               />
             </div>
             <div>
-              <label className="text-zinc-400 text-sm block mb-2">Adres rozładunku</label>
+              <label className="text-zinc-400 text-sm block mb-2">Unloading Address</label>
               <input
                 type="text"
-                placeholder="np. Berlin, Hauptstraße 45"
+                placeholder="e.g. Berlin, Main St. 45"
                 value={formData.unloadingAddress}
                 onChange={(e) => handleChange('unloadingAddress', e.target.value)}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
               />
             </div>
             <div>
-              <label className="text-zinc-400 text-sm block mb-2">Data rozładunku</label>
+              <label className="text-zinc-400 text-sm block mb-2">Unloading Date</label>
               <input
                 type="datetime-local"
                 value={formData.unloadingDate}
@@ -223,7 +223,7 @@ export function OrderForm() {
             className="bg-red-600 hover:bg-red-700 text-white flex-1"
             size="lg"
           >
-            Dodaj zlecenie
+            Add Order
           </Button>
           <Button
             type="button"
@@ -246,7 +246,7 @@ export function OrderForm() {
               })
             }}
           >
-            Wyczyść
+            Clear
           </Button>
         </div>
       </form>

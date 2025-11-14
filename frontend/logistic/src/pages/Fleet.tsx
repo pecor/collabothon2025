@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Truck, ArrowLeft, Filter, Search } from 'lucide-react'
+import { Truck, Filter, Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { VehicleCard } from '@/components/fleet/VehicleCard'
 import { DriverCard } from '@/components/fleet/DriverCard'
 import { FleetStats } from '@/components/fleet/FleetStats'
+import { Navbar } from '@/components/layout'
 
 type ViewMode = 'all' | 'vehicles' | 'drivers'
 
@@ -115,39 +116,7 @@ export function Fleet() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header - Fixed */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-zinc-800 bg-black/80 backdrop-blur-sm">
-        <div className="w-full px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Button
-              variant="outline"
-              size="icon"
-              className="border-zinc-700 text-white hover:bg-zinc-900"
-              onClick={() => navigate('/')}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div 
-              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => navigate('/')}
-            >
-              <div className="bg-red-600 p-2 rounded-lg">
-                <Truck className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">TruckAI</h1>
-                <p className="text-xs text-zinc-500">Flota i kierowcy</p>
-              </div>
-            </div>
-          </div>
-          <Button 
-            className="bg-red-600 hover:bg-red-700 text-white"
-            onClick={() => navigate('/add-order')}
-          >
-            Dodaj zlecenie
-          </Button>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main Content */}
       <main className="pt-24 pb-12 px-8">
@@ -155,10 +124,10 @@ export function Fleet() {
           {/* Page Title */}
           <div className="mb-8">
             <h2 className="text-4xl font-bold text-white mb-3">
-              Dostępna Flota i Kierowcy
+              Available Fleet & Drivers
             </h2>
             <p className="text-zinc-400 text-lg">
-              Lista pojazdów i kierowców z automatycznym dopasowaniem do zlecenia
+              List of vehicles and drivers with automatic order matching
             </p>
           </div>
 
@@ -179,7 +148,7 @@ export function Fleet() {
                     : 'border-zinc-700 text-white hover:bg-zinc-900'
                 }
               >
-                Wszystko
+                All
               </Button>
               <Button
                 onClick={() => setViewMode('vehicles')}
@@ -190,7 +159,7 @@ export function Fleet() {
                     : 'border-zinc-700 text-white hover:bg-zinc-900'
                 }
               >
-                Pojazdy
+                Vehicles
               </Button>
               <Button
                 onClick={() => setViewMode('drivers')}
@@ -201,7 +170,7 @@ export function Fleet() {
                     : 'border-zinc-700 text-white hover:bg-zinc-900'
                 }
               >
-                Kierowcy
+                Drivers
               </Button>
             </div>
 
@@ -209,7 +178,7 @@ export function Fleet() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               <input
                 type="text"
-                placeholder="Szukaj po nazwie, numerze rejestracyjnym..."
+                placeholder="Search by name, license plate..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
@@ -221,7 +190,7 @@ export function Fleet() {
               className="border-zinc-700 text-white hover:bg-zinc-900"
             >
               <Filter className="h-4 w-4 mr-2" />
-              Filtry
+              Filters
             </Button>
           </div>
 
@@ -230,7 +199,7 @@ export function Fleet() {
             <div className="mb-12">
               <h3 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
                 <Truck className="h-6 w-6 text-red-500" />
-                Pojazdy ({filteredVehicles.length})
+                Vehicles ({filteredVehicles.length})
               </h3>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredVehicles.map(vehicle => (
@@ -245,7 +214,7 @@ export function Fleet() {
             <div>
               <h3 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
                 <Truck className="h-6 w-6 text-red-500" />
-                Kierowcy ({filteredDrivers.length})
+                Drivers ({filteredDrivers.length})
               </h3>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredDrivers.map(driver => (
