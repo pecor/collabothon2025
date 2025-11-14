@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Truck, Filter, Search } from 'lucide-react'
+import { Truck, Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { VehicleCard } from '@/components/fleet/VehicleCard'
 import { DriverCard } from '@/components/fleet/DriverCard'
 import { FleetStats } from '@/components/fleet/FleetStats'
 import { Navbar } from '@/components/layout'
-import { getVehicles, getUsers, type Vehicle, type User } from '@/lib/api'
+import { getVehicles, getUsers, getVehicleTypeOptions, getVehicleStatusOptions, type Vehicle, type User } from '@/lib/api'
 
 type ViewMode = 'all' | 'vehicles' | 'drivers'
 
@@ -17,14 +17,25 @@ export function Fleet() {
   const [vehicles, setVehicles] = useState<any[]>([])
   const [drivers, setDrivers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  
+  // Filter options
+  const [vehicleTypeOptions, setVehicleTypeOptions] = useState<Array<{ value: string; label: string }>>([])
+  const [vehicleStatusOptions, setVehicleStatusOptions] = useState<Array<{ value: string; label: string }>>([])
+  const [selectedType, setSelectedType] = useState<string>('')
+  const [selectedStatus, setSelectedStatus] = useState<string>('')
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [vehiclesData, driversData] = await Promise.all([
+        const [vehiclesData, driversData, typeOptions, statusOptions] = await Promise.all([
           getVehicles(),
-          getUsers()
+          getUsers(),
+          getVehicleTypeOptions(),
+          getVehicleStatusOptions()
         ])
+        
+        setVehicleTypeOptions(typeOptions.choices)
+        setVehicleStatusOptions(statusOptions.choices)
 
         // Map vehicles to component format
         const mappedVehicles = vehiclesData.map((v: Vehicle) => ({
@@ -93,8 +104,10 @@ export function Fleet() {
   }
 
   const filteredVehicles = vehicles.filter(v =>
-    v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.licensePlate.toLowerCase().includes(searchQuery.toLowerCase())
+    (v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    v.licensePlate.toLowerCase().includes(searchQuery.toLowerCase())) &&
+    (selectedType === '' || v.type.toLowerCase() === selectedType.toLowerCase()) &&
+    (selectedStatus === '' || (selectedStatus === 'available' && v.available) || (selectedStatus !== 'available' && !v.available))
   )
 
   const filteredDrivers = drivers.filter(d =>
@@ -124,61 +137,85 @@ export function Fleet() {
           </div>
 
           {/* Filters & Search */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setViewMode('all')}
-                variant={viewMode === 'all' ? 'default' : 'outline'}
-                className={
-                  viewMode === 'all'
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'border-zinc-700 text-white hover:bg-zinc-900'
-                }
-              >
-                All
-              </Button>
-              <Button
-                onClick={() => setViewMode('vehicles')}
-                variant={viewMode === 'vehicles' ? 'default' : 'outline'}
-                className={
-                  viewMode === 'vehicles'
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'border-zinc-700 text-white hover:bg-zinc-900'
-                }
-              >
-                Vehicles
-              </Button>
-              <Button
-                onClick={() => setViewMode('drivers')}
-                variant={viewMode === 'drivers' ? 'default' : 'outline'}
-                className={
-                  viewMode === 'drivers'
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'border-zinc-700 text-white hover:bg-zinc-900'
-                }
-              >
-                Drivers
-              </Button>
+          <div className="flex flex-col gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setViewMode('all')}
+                  variant={viewMode === 'all' ? 'default' : 'outline'}
+                  className={
+                    viewMode === 'all'
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'border-zinc-700 text-white hover:bg-zinc-900'
+                  }
+                >
+                  All
+                </Button>
+                <Button
+                  onClick={() => setViewMode('vehicles')}
+                  variant={viewMode === 'vehicles' ? 'default' : 'outline'}
+                  className={
+                    viewMode === 'vehicles'
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'border-zinc-700 text-white hover:bg-zinc-900'
+                  }
+                >
+                  Vehicles
+                </Button>
+                <Button
+                  onClick={() => setViewMode('drivers')}
+                  variant={viewMode === 'drivers' ? 'default' : 'outline'}
+                  className={
+                    viewMode === 'drivers'
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'border-zinc-700 text-white hover:bg-zinc-900'
+                  }
+                >
+                  Drivers
+                </Button>
+              </div>
+
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                <input
+                  type="text"
+                  placeholder="Search by name or license plate..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-10 pr-4 py-2 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                />
+              </div>
             </div>
 
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-              <input
-                type="text"
-                placeholder="Search by name, license plate..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
-              />
-            </div>
-
-            <Button
-              variant="outline"
-              className="border-zinc-700 text-white hover:bg-zinc-900"
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Filters
-            </Button>
+            {/* Vehicle Filters */}
+            {(viewMode === 'all' || viewMode === 'vehicles') && (
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <select
+                    value={selectedType}
+                    onChange={(e) => setSelectedType(e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-white focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                  >
+                    <option value="">All Vehicle Types</option>
+                    {vehicleTypeOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <select
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-white focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                  >
+                    <option value="">All Statuses</option>
+                    {vehicleStatusOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Vehicles Section */}

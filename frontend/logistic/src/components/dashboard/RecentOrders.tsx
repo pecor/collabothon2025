@@ -1,12 +1,13 @@
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface Order {
-  id: string
   route: string
   status: 'completed' | 'in-progress'
   profit: number
-  time: string
-  score: number
+  loadingDate: string
+  unloadingDate: string
+  driver: string
+  vehicle: string
 }
 
 interface RecentOrdersProps {
@@ -17,13 +18,12 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader>
-        <CardTitle className="text-white text-xl mb-4">Recent Orders</CardTitle>
+        <CardTitle className="text-white text-xl mb-4">Active Orders</CardTitle>
         <div className="space-y-3">
-          {orders.map(order => (
-            <div key={order.id} className="bg-zinc-800 border border-zinc-700 rounded-lg p-4">
+          {orders.map((order, idx) => (
+            <div key={idx} className="bg-zinc-800 border border-zinc-700 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
-                  <span className="text-zinc-400 font-mono text-sm">{order.id}</span>
                   <span
                     className={`px-2 py-0.5 rounded text-xs ${
                       order.status === 'completed'
@@ -34,12 +34,26 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                     {order.status === 'completed' ? 'Completed' : 'In Transit'}
                   </span>
                 </div>
-                <span className="text-green-400 font-bold">+{order.profit} PLN</span>
+                <span className="text-green-400 font-bold">+{order.profit.toLocaleString()} PLN</span>
               </div>
-              <p className="text-white font-medium mb-2">{order.route}</p>
-              <div className="flex items-center gap-4 text-sm text-zinc-400">
-                <span>⏱ {order.time}</span>
-                <span>📊 {order.score}% match</span>
+              <p className="text-white font-medium mb-3">{order.route}</p>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-zinc-400">Loading: </span>
+                  <span className="text-white">{new Date(order.loadingDate).toLocaleDateString()}</span>
+                </div>
+                <div>
+                  <span className="text-zinc-400">Unloading: </span>
+                  <span className="text-white">{new Date(order.unloadingDate).toLocaleDateString()}</span>
+                </div>
+                <div>
+                  <span className="text-zinc-400">Driver: </span>
+                  <span className="text-white">{order.driver}</span>
+                </div>
+                <div>
+                  <span className="text-zinc-400">Vehicle: </span>
+                  <span className="text-white">{order.vehicle}</span>
+                </div>
               </div>
             </div>
           ))}

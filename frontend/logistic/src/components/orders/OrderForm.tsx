@@ -1,8 +1,8 @@
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Package, Weight, Ruler, Thermometer } from 'lucide-react'
-import { useState } from 'react'
-import { createOrder, api } from '@/lib/api'
+import { useState, useEffect } from 'react'
+import { createOrder, api, getCargoTypeOptions, getTemperatureOptions, getSpecialRequirementsOptions } from '@/lib/api'
 import type { Cargo, Route } from '@/lib/api'
 
 interface OrderFormData {
@@ -35,6 +35,32 @@ export function OrderForm() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Options from API
+  const [cargoTypeOptions, setCargoTypeOptions] = useState<string[]>([])
+  const [temperatureOptions, setTemperatureOptions] = useState<string[]>([])
+  const [specialRequirementsOptions, setSpecialRequirementsOptions] = useState<string[]>([])
+  
+  // Load options on mount
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        const [cargoTypes, temperatures, specialReqs] = await Promise.all([
+          getCargoTypeOptions(),
+          getTemperatureOptions(),
+          getSpecialRequirementsOptions()
+        ])
+        
+        setCargoTypeOptions(cargoTypes.choices)
+        setTemperatureOptions(temperatures.choices)
+        setSpecialRequirementsOptions(specialReqs.choices)
+      } catch (err) {
+        console.error('Failed to load options:', err)
+      }
+    }
+    
+    loadOptions()
+  }, [])
 
   const handleChange = (field: keyof OrderFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -153,13 +179,16 @@ export function OrderForm() {
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <label className="text-zinc-400 text-sm block mb-2">Cargo Type</label>
-              <input
-                type="text"
-                placeholder="e.g. Pallets, Boxes, Chemicals"
+              <select
                 value={formData.cargoType}
                 onChange={(e) => handleChange('cargoType', e.target.value)}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
-              />
+              >
+                <option value="">Select cargo type...</option>
+                {cargoTypeOptions.map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="text-zinc-400 text-sm block mb-2 flex items-center gap-2">
@@ -225,24 +254,30 @@ export function OrderForm() {
           </h3>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="text-zinc-400 text-sm block mb-2">Temperature (°C)</label>
-              <input
-                type="text"
-                placeholder="e.g. -18 to -20 or 'Ambient'"
+              <label className="text-zinc-400 text-sm block mb-2">Temperature</label>
+              <select
                 value={formData.temperature}
                 onChange={(e) => handleChange('temperature', e.target.value)}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
-              />
+              >
+                <option value="">Select temperature...</option>
+                {temperatureOptions.map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="text-zinc-400 text-sm block mb-2">Special Requirements</label>
-              <input
-                type="text"
-                placeholder="e.g. ADR, Forklift, Tarpaulin"
+              <select
                 value={formData.specialRequirements}
                 onChange={(e) => handleChange('specialRequirements', e.target.value)}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-white placeholder:text-zinc-500 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
-              />
+              >
+                <option value="">Select special requirements...</option>
+                {specialRequirementsOptions.map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

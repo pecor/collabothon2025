@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { Home, AddOrder, Fleet, Orders, Requirements, Matching, Route as RoutePage, Dashboard, Docs } from '@/pages'
+import { Home, AddOrder, Fleet, Orders, Requirements, Matching, Route as RoutePage, Dashboard, Docs, Routes as RoutesPage } from '@/pages'
 import './App.css'
 
 function App() {
@@ -13,6 +13,7 @@ function App() {
         <Route path="/requirements" element={<Requirements />} />
         <Route path="/matching" element={<Matching />} />
         <Route path="/route" element={<RoutePage />} />
+        <Route path="/routes" element={<RoutesPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/docs" element={<Docs />} />
       </Routes>

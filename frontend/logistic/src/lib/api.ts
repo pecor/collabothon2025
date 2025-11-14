@@ -71,6 +71,7 @@ export interface Order {
   user_name?: string;
   cargo: number;
   cargo_name?: string;
+  cargo_type?: string;
   route: number;
   route_info?: string;
   vehicle: number | null;
@@ -81,6 +82,14 @@ export interface Order {
   creation_date: string;
   planned_date: string;
   actual_end_date: string | null;
+  temperature: string;
+  weight: number;
+  special_requirements: string;
+  loading_date: string;
+  unloading_date: string;
+  cost?: number;
+  revenue?: number;
+  profit?: number;
 }
 
 export interface Tracker {
@@ -337,6 +346,47 @@ export const getUpcomingHolidays = async (country: string = 'PL', days: number =
   const response = await api.get('/holidays/upcoming/', {
     params: { country, days },
   });
+  return response.data;
+};
+
+// Select/Dropdown Options
+export const getOrderStatusOptions = async (): Promise<{ choices: Array<{ value: string; label: string }> }> => {
+  const response = await api.get('/orders/select-status/');
+  return response.data;
+};
+
+export const getCargoTypeOptions = async (): Promise<{ choices: string[] }> => {
+  const response = await api.get('/orders/select-cargo-type/');
+  return response.data;
+};
+
+export const getTemperatureOptions = async (): Promise<{ choices: string[] }> => {
+  const response = await api.get('/orders/select-temperature/');
+  return response.data;
+};
+
+export const getSpecialRequirementsOptions = async (): Promise<{ choices: string[] }> => {
+  const response = await api.get('/orders/select-special-requirements/');
+  return response.data;
+};
+
+export const getVehicleTypeOptions = async (): Promise<{ choices: Array<{ value: string; label: string }> }> => {
+  const response = await api.get('/vehicles/select-type/');
+  return response.data;
+};
+
+export const getVehicleStatusOptions = async (): Promise<{ choices: Array<{ value: string; label: string }> }> => {
+  const response = await api.get('/vehicles/select-status/');
+  return response.data;
+};
+
+export const getRouteStatusOptions = async (): Promise<{ choices: Array<{ value: string; label: string }> }> => {
+  const response = await api.get('/routes/select-status/');
+  return response.data;
+};
+
+export const getHolidayLicenseAllowedOptions = async (): Promise<{ choices: Array<{ value: number; label: string }> }> => {
+  const response = await api.get('/holidays/select-license-allowed/');
   return response.data;
 };
 

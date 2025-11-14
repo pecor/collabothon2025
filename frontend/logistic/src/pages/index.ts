@@ -5,6 +5,7 @@ export { Orders } from './Orders'
 export { Requirements } from './Requirements'
 export { Matching } from './Matching'
 export { Route } from './Route'
+export { Routes } from './Routes'
 export { Dashboard } from './Dashboard'
 export { Docs } from './Docs'
 

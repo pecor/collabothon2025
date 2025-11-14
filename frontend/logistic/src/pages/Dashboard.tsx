@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { StatsCards, RecentOrders, TopRoutes, AlertsSidebar } from '@/components/dashboard'
 import { Navbar } from '@/components/layout'
-import { getDashboardStats, getOrders, type Order } from '@/lib/api'
+import { getDashboardStats, getActiveOrders, type Order } from '@/lib/api'
 
 export function Dashboard() {
   const [stats, setStats] = useState({
@@ -22,7 +22,7 @@ export function Dashboard() {
       try {
         const [dashboardData, ordersData] = await Promise.all([
           getDashboardStats(),
-          getOrders()
+          getActiveOrders()
         ])
 
         // Map dashboard stats
@@ -37,18 +37,18 @@ export function Dashboard() {
           savedTime: '42h' // TODO: Calculate from AI efficiency
         })
 
-        // Map recent orders (last 4)
+        // Map active orders
         const recent = ordersData
-          .slice(0, 4)
           .map((order: Order) => ({
-            id: `#${order.id}`,
             route: order.route_info || 'Unknown',
             status: order.status === 'in_transit' ? 'in-progress' as const : 
                    order.status === 'completed' ? 'completed' as const : 
                    'in-progress' as const,
-            profit: 3200, // TODO: Calculate from order data
-            time: '12h 30m', // TODO: Calculate from route estimated_time
-            score: 90 // TODO: Get from AI scoring
+            profit: order.profit || 0,
+            loadingDate: order.loading_date || order.planned_date,
+            unloadingDate: order.unloading_date || order.planned_date,
+            driver: order.user_name || 'Not assigned',
+            vehicle: order.vehicle_info || 'Not assigned'
           }))
         
         setRecentOrders(recent)
