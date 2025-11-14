@@ -17,7 +17,7 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader>
-        <CardTitle className="text-white text-xl mb-4">Ostatnie zlecenia</CardTitle>
+        <CardTitle className="text-white text-xl mb-4">Recent Orders</CardTitle>
         <div className="space-y-3">
           {orders.map(order => (
             <div key={order.id} className="bg-zinc-800 border border-zinc-700 rounded-lg p-4">
@@ -31,7 +31,7 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                         : 'bg-blue-900/30 text-blue-400'
                     }`}
                   >
-                    {order.status === 'completed' ? 'Zakończone' : 'W trasie'}
+                    {order.status === 'completed' ? 'Completed' : 'In Transit'}
                   </span>
                 </div>
                 <span className="text-green-400 font-bold">+{order.profit} PLN</span>

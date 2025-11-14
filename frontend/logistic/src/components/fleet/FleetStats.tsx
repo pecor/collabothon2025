@@ -21,7 +21,7 @@ export function FleetStats({ stats }: FleetStatsProps) {
               <Truck className="h-5 w-5 text-red-500" />
             </div>
             <div>
-              <CardDescription className="text-zinc-500 text-xs">Pojazdy</CardDescription>
+              <CardDescription className="text-zinc-500 text-xs">Vehicles</CardDescription>
               <CardTitle className="text-white text-2xl">
                 {stats.availableVehicles}/{stats.totalVehicles}
               </CardTitle>
@@ -37,7 +37,7 @@ export function FleetStats({ stats }: FleetStatsProps) {
               <Users className="h-5 w-5 text-red-500" />
             </div>
             <div>
-              <CardDescription className="text-zinc-500 text-xs">Kierowcy</CardDescription>
+              <CardDescription className="text-zinc-500 text-xs">Drivers</CardDescription>
               <CardTitle className="text-white text-2xl">
                 {stats.availableDrivers}/{stats.totalDrivers}
               </CardTitle>
@@ -55,7 +55,7 @@ export function FleetStats({ stats }: FleetStatsProps) {
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                 </div>
                 <div>
-                  <CardDescription className="text-zinc-500 text-xs">Dopasowania</CardDescription>
+                  <CardDescription className="text-zinc-500 text-xs">Matches</CardDescription>
                   <CardTitle className="text-white text-2xl">{stats.matchesFound}</CardTitle>
                 </div>
               </div>
@@ -69,7 +69,7 @@ export function FleetStats({ stats }: FleetStatsProps) {
                   <TrendingUp className="h-5 w-5 text-green-400" />
                 </div>
                 <div>
-                  <CardDescription className="text-green-300 text-xs">Śr. dopasowanie</CardDescription>
+                  <CardDescription className="text-green-300 text-xs">Avg. match</CardDescription>
                   <CardTitle className="text-white text-2xl">87%</CardTitle>
                 </div>
               </div>

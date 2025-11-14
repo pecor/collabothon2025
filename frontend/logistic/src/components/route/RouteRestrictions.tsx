@@ -14,7 +14,7 @@ export function RouteRestrictions({ restrictions }: RouteRestrictionsProps) {
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader>
-        <CardTitle className="text-white text-xl mb-4">Ograniczenia na trasie</CardTitle>
+        <CardTitle className="text-white text-xl mb-4">Route Restrictions</CardTitle>
         <div className="space-y-3">
           {restrictions.map((rest, idx) => (
             <div

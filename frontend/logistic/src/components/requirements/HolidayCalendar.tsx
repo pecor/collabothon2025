@@ -19,7 +19,7 @@ export function HolidayCalendar({ holidays }: HolidayCalendarProps) {
       <CardHeader>
         <CardTitle className="text-white text-xl flex items-center gap-2 mb-4">
           <Calendar className="h-5 w-5 text-red-500" />
-          Kalendarz zakazów
+          Restrictions Calendar
         </CardTitle>
         <div className="space-y-3">
           {holidays.map((holiday, idx) => (

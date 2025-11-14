@@ -13,38 +13,38 @@ export function RequirementsSummary() {
   const requirements: Requirement[] = [
     {
       id: 'adr',
-      label: 'Certyfikat ADR',
+      label: 'ADR Certificate',
       required: false,
       status: 'not-needed',
-      description: 'Nie wymagany - brak materiałów niebezpiecznych'
+      description: 'Not required - no hazardous materials'
     },
     {
       id: 'license-ce',
-      label: 'Prawo jazdy C+E',
+      label: 'Driving License C+E',
       required: true,
       status: 'required',
-      description: 'Wymagane - pojazd ciężarowy z naczepą'
+      description: 'Required - truck with trailer'
     },
     {
       id: 'vehicle-curtain',
-      label: 'Pojazd typu Plandeka',
+      label: 'Curtain-side Vehicle',
       required: true,
       status: 'required',
-      description: 'Standardowa naczepa plandekowa'
+      description: 'Standard curtain-side trailer'
     },
     {
       id: 'forklift',
-      label: 'Wózek widłowy na miejscu',
+      label: 'Forklift On-site',
       required: false,
       status: 'optional',
-      description: 'Zalecane dla szybszego rozładunku'
+      description: 'Recommended for faster unloading'
     },
     {
       id: 'holiday-block',
-      label: 'Zakaz w dni świąteczne',
+      label: 'Holiday Restrictions',
       required: false,
       status: 'not-needed',
-      description: 'Trasa nie koliduje ze świętami'
+      description: 'Route does not conflict with holidays'
     }
   ]
 
@@ -66,13 +66,13 @@ export function RequirementsSummary() {
       case 'required':
         return (
           <span className="px-2 py-1 bg-red-900/30 border border-red-800 text-red-400 text-xs rounded-md font-medium">
-            Wymagane
+            Required
           </span>
         )
       case 'optional':
         return (
           <span className="px-2 py-1 bg-yellow-900/30 border border-yellow-800 text-yellow-400 text-xs rounded-md font-medium">
-            Opcjonalne
+            Optional
           </span>
         )
       case 'not-needed':
@@ -92,10 +92,10 @@ export function RequirementsSummary() {
       <CardHeader>
         <CardTitle className="text-white text-2xl flex items-center gap-2">
           <Shield className="h-6 w-6 text-red-500" />
-          Wymagania zlecenia
+          Order Requirements
         </CardTitle>
         <CardDescription className="text-zinc-400">
-          Automatycznie wykryte wymagania prawne i techniczne
+          Automatically detected legal and technical requirements
         </CardDescription>
       </CardHeader>
 

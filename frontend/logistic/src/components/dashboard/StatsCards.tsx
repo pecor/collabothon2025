@@ -25,9 +25,9 @@ export function StatsCards({ stats }: StatsCardsProps) {
             <Package className="h-6 w-6 text-blue-400" />
             <TrendingUp className="h-4 w-4 text-green-400" />
           </div>
-          <CardDescription className="text-blue-300 text-sm">Zlecenia ogółem</CardDescription>
+          <CardDescription className="text-blue-300 text-sm">Total Orders</CardDescription>
           <CardTitle className="text-white text-3xl">{stats.totalOrders}</CardTitle>
-          <p className="text-blue-300 text-xs mt-2">+12 w tym miesiącu</p>
+          <p className="text-blue-300 text-xs mt-2">+12 this month</p>
         </CardHeader>
       </Card>
 
@@ -37,9 +37,9 @@ export function StatsCards({ stats }: StatsCardsProps) {
             <DollarSign className="h-6 w-6 text-green-400" />
             <TrendingUp className="h-4 w-4 text-green-400" />
           </div>
-          <CardDescription className="text-green-300 text-sm">Realny ROI</CardDescription>
+          <CardDescription className="text-green-300 text-sm">Real ROI</CardDescription>
           <CardTitle className="text-white text-3xl">{stats.realROI}</CardTitle>
-          <p className="text-green-300 text-xs mt-2">{stats.totalProfit.toLocaleString()} PLN zysku</p>
+          <p className="text-green-300 text-xs mt-2">{stats.totalProfit.toLocaleString()} PLN profit</p>
         </CardHeader>
       </Card>
 
@@ -49,9 +49,9 @@ export function StatsCards({ stats }: StatsCardsProps) {
             <BarChart3 className="h-6 w-6 text-purple-400" />
             <CheckCircle2 className="h-4 w-4 text-green-400" />
           </div>
-          <CardDescription className="text-purple-300 text-sm">Rekomendacje AI</CardDescription>
+          <CardDescription className="text-purple-300 text-sm">AI Recommendations</CardDescription>
           <CardTitle className="text-white text-3xl">{stats.aiRecommendation}</CardTitle>
-          <p className="text-purple-300 text-xs mt-2">Zleceń z auto-matchem</p>
+          <p className="text-purple-300 text-xs mt-2">Orders with auto-match</p>
         </CardHeader>
       </Card>
 
@@ -61,9 +61,9 @@ export function StatsCards({ stats }: StatsCardsProps) {
             <Clock className="h-6 w-6 text-orange-400" />
             <TrendingUp className="h-4 w-4 text-green-400" />
           </div>
-          <CardDescription className="text-orange-300 text-sm">Średni czas</CardDescription>
+          <CardDescription className="text-orange-300 text-sm">Avg Time</CardDescription>
           <CardTitle className="text-white text-3xl">{stats.avgTime}</CardTitle>
-          <p className="text-orange-300 text-xs mt-2">Zaoszczędzono {stats.savedTime}</p>
+          <p className="text-orange-300 text-xs mt-2">Saved {stats.savedTime}</p>
         </CardHeader>
       </Card>
     </div>

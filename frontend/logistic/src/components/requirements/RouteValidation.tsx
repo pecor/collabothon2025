@@ -25,10 +25,10 @@ export function RouteValidation({ routeCheck }: RouteValidationProps) {
           )}
           <div className="flex-1">
             <CardTitle className="text-white text-xl mb-2">
-              {routeCheck.allowed ? 'Trasa dozwolona' : 'Trasa zablokowana'}
+              {routeCheck.allowed ? 'Route Allowed' : 'Route Blocked'}
             </CardTitle>
             <CardDescription className="text-base mb-4">
-              <span className="text-white font-medium">{routeCheck.route}</span> w dniu {routeCheck.date}
+              <span className="text-white font-medium">{routeCheck.route}</span> on {routeCheck.date}
             </CardDescription>
             <div className="bg-black/30 rounded-lg p-4 mb-4">
               <p className={routeCheck.allowed ? 'text-green-200' : 'text-red-200'}>
@@ -39,7 +39,7 @@ export function RouteValidation({ routeCheck }: RouteValidationProps) {
               <div className="flex items-start gap-2 text-yellow-200">
                 <Info className="h-5 w-5 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium">Alternatywna data:</p>
+                  <p className="font-medium">Alternative date:</p>
                   <p className="text-yellow-100">{routeCheck.alternative}</p>
                 </div>
               </div>

@@ -19,7 +19,7 @@ export function LegalRequirementsList({ requirements }: LegalRequirementsListPro
       <CardHeader>
         <CardTitle className="text-white text-2xl flex items-center gap-2 mb-4">
           <Shield className="h-6 w-6 text-red-500" />
-          Wymagania prawne
+          Legal Requirements
         </CardTitle>
         <div className="space-y-3">
           {requirements.map(req => (
@@ -32,7 +32,7 @@ export function LegalRequirementsList({ requirements }: LegalRequirementsListPro
                     </span>
                     {req.status === 'required' && (
                       <span className="text-xs px-2 py-0.5 bg-red-900/30 border border-red-800 rounded text-red-400">
-                        Wymagane
+                        Required
                       </span>
                     )}
                   </div>

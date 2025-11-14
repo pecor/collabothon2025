@@ -40,7 +40,7 @@ export function DriverCard({ driver }: DriverCardProps) {
               <CardTitle className="text-white text-lg">{driver.name}</CardTitle>
               <CardDescription className="text-zinc-500 text-sm flex items-center gap-2">
                 <Award className="h-3 w-3" />
-                {driver.experience} lat doświadczenia
+                {driver.experience} years experience
               </CardDescription>
             </div>
           </div>
@@ -56,7 +56,7 @@ export function DriverCard({ driver }: DriverCardProps) {
 
         <div className="space-y-3">
           <div>
-            <span className="text-zinc-500 text-sm block mb-2">Uprawnienia:</span>
+            <span className="text-zinc-500 text-sm block mb-2">Licenses:</span>
             <div className="flex flex-wrap gap-2">
               {driver.licenses.map((license, index) => (
                 <span
@@ -71,7 +71,7 @@ export function DriverCard({ driver }: DriverCardProps) {
 
           <div className="grid grid-cols-2 gap-3 text-sm pt-2">
             <div>
-              <span className="text-zinc-500">Ocena:</span>
+              <span className="text-zinc-500">Rating:</span>
               <p className="text-white font-medium flex items-center gap-1">
                 ⭐ {driver.rating.toFixed(1)} / 5.0
               </p>
@@ -80,12 +80,12 @@ export function DriverCard({ driver }: DriverCardProps) {
               {driver.available ? (
                 <>
                   <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <span className="text-green-400 text-sm font-medium">Dostępny</span>
+                  <span className="text-green-400 text-sm font-medium">Available</span>
                 </>
               ) : (
                 <>
                   <XCircle className="h-4 w-4 text-red-500" />
-                  <span className="text-red-400 text-sm font-medium">Niedostępny</span>
+                  <span className="text-red-400 text-sm font-medium">Unavailable</span>
                 </>
               )}
             </div>

@@ -43,7 +43,7 @@ export function MatchCard({ match, index }: MatchCardProps) {
               {match.score}%
             </div>
           </div>
-          <Button variant={index === 0 ? 'default' : 'outline'}>Wybierz ten zestaw</Button>
+          <Button variant={index === 0 ? 'default' : 'outline'}>Select this match</Button>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -94,7 +94,7 @@ export function MatchCard({ match, index }: MatchCardProps) {
         <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4">
           <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-red-500" />
-            Uzasadnienie AI
+            AI Reasoning
           </h4>
           <ul className="space-y-2">
             {match.reasons.map((reason, idx) => (

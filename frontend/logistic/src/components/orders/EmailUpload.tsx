@@ -47,10 +47,10 @@ export function EmailUpload() {
       <CardHeader>
         <CardTitle className="text-white text-2xl flex items-center gap-2">
           <Mail className="h-6 w-6 text-red-500" />
-          Automatyczna ekstrakcja z maila
+          Automatic Email Extraction
         </CardTitle>
         <CardDescription className="text-zinc-400">
-          Wklej treść maila lub wgraj plik .eml - AI wyciągnie wszystkie dane
+          Paste email content or upload .eml file - AI will extract all data
         </CardDescription>
       </CardHeader>
 

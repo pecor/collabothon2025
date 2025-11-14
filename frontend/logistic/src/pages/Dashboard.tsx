@@ -63,9 +63,9 @@ export function Dashboard() {
   }, [])
 
   const alerts = [
-    { type: 'warning' as const, message: 'Pojazd WA 67890 wymaga przeglądu za 3 dni', priority: 'medium' as const },
-    { type: 'info' as const, message: 'Nowe zlecenie czeka na przypisanie', priority: 'low' as const },
-    { type: 'error' as const, message: 'Kierowca - upływający certyfikat ADR', priority: 'high' as const }
+    { type: 'warning' as const, message: 'Vehicle WA 67890 requires inspection in 3 days', priority: 'medium' as const },
+    { type: 'info' as const, message: 'New order waiting for assignment', priority: 'low' as const },
+    { type: 'error' as const, message: 'Driver - expiring ADR certificate', priority: 'high' as const }
   ]
 
   const topRoutes = [

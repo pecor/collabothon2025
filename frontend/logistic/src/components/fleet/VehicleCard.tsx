@@ -57,17 +57,17 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
-              <span className="text-zinc-500">Typ:</span>
+              <span className="text-zinc-500">Type:</span>
               <p className="text-white font-medium">{vehicle.type}</p>
             </div>
             <div>
-              <span className="text-zinc-500">Ładowność:</span>
+              <span className="text-zinc-500">Capacity:</span>
               <p className="text-white font-medium">{vehicle.capacity} kg</p>
             </div>
           </div>
 
           <div>
-            <span className="text-zinc-500 text-sm block mb-2">Cechy specjalne:</span>
+            <span className="text-zinc-500 text-sm block mb-2">Special features:</span>
             <div className="flex flex-wrap gap-2">
               {vehicle.features.map((feature, index) => (
                 <span
@@ -84,12 +84,12 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
             {vehicle.available ? (
               <>
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <span className="text-green-400 text-sm font-medium">Dostępny</span>
+                <span className="text-green-400 text-sm font-medium">Available</span>
               </>
             ) : (
               <>
                 <XCircle className="h-4 w-4 text-red-500" />
-                <span className="text-red-400 text-sm font-medium">Niedostępny</span>
+                <span className="text-red-400 text-sm font-medium">Unavailable</span>
               </>
             )}
           </div>

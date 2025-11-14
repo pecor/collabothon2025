@@ -28,4 +28,4 @@ COPY . /app/
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Run gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:1333", "config.wsgi:application"]

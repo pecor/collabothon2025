@@ -82,11 +82,11 @@ export function Matching() {
     const driver = drivers[index % drivers.length]
     const score = 98 - (index * 7)
     
-    // Map vehicle type to Polish names
+    // Map vehicle type to English names
     const typeMap: Record<string, string> = {
-      'refrigerated': 'Chłodnia',
+      'refrigerated': 'Refrigerated',
       'box': 'Box',
-      'cargo': 'Plandeka'
+      'cargo': 'Curtain-side'
     }
     
     // Get driver licenses
@@ -94,7 +94,7 @@ export function Matching() {
     if (driver?.license_c) licenses.push('C')
     if (driver?.license_ce) licenses.push('C+E')
     if (driver?.license_adr) licenses.push('ADR')
-    if (driver?.forklift_certified) licenses.push('Wózek widłowy')
+    if (driver?.forklift_certified) licenses.push('Forklift')
     
     return {
       id: vehicle.id.toString(),
@@ -105,9 +105,9 @@ export function Matching() {
         type: typeMap[vehicle.type] || vehicle.type,
         capacity: vehicle.capacity_weight,
         features: [
-          vehicle.has_forklift ? 'Wózek widłowy' : null,
+          vehicle.has_forklift ? 'Forklift' : null,
           'GPS',
-          vehicle.type === 'refrigerated' ? 'Chłodnia' : null
+          vehicle.type === 'refrigerated' ? 'Refrigerated' : null
         ].filter(Boolean) as string[]
       },
       driver: {
@@ -120,11 +120,11 @@ export function Matching() {
       cost: 1800 + (index * 50),
       eta: `${12 + index}h ${20 + (index * 15)}min`,
       reasons: [
-        score >= 90 ? 'Pełna zgodność z wymaganiami zlecenia' : 'Podstawowe wymagania spełnione',
-        `Ładowność ${vehicle.capacity_weight} kg`,
-        driver?.name ? `Kierowca: ${driver.name}` : 'Kierowca dostępny',
-        vehicle.status === 'available' ? 'Pojazd dostępny od zaraz' : 'Pojazd w użyciu',
-        score >= 90 ? 'Najwyższy szacowany zysk' : 'Dobra rentowność'
+        score >= 90 ? 'Full compliance with order requirements' : 'Basic requirements met',
+        `Load capacity ${vehicle.capacity_weight} kg`,
+        driver?.name ? `Driver: ${driver.name}` : 'Driver available',
+        vehicle.status === 'available' ? 'Vehicle available immediately' : 'Vehicle in use',
+        score >= 90 ? 'Highest estimated profit' : 'Good profitability'
       ]
     }
   })

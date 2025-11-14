@@ -16,7 +16,7 @@ export function AlertsSidebar({ alerts }: AlertsSidebarProps) {
     <div className="space-y-6">
       <Card className="bg-zinc-900 border-zinc-800 sticky top-28">
         <CardHeader>
-          <CardTitle className="text-white text-xl mb-4">Alerty i problemy</CardTitle>
+          <CardTitle className="text-white text-xl mb-4">Alerts & Issues</CardTitle>
           <div className="space-y-3">
             {alerts.map((alert, idx) => (
               <div
@@ -47,7 +47,7 @@ export function AlertsSidebar({ alerts }: AlertsSidebarProps) {
 
       <Card className="bg-zinc-900 border-zinc-800">
         <CardHeader>
-          <CardTitle className="text-white text-lg mb-4">Wykres tygodniowy</CardTitle>
+          <CardTitle className="text-white text-lg mb-4">Weekly Chart</CardTitle>
           <div className="h-48 bg-zinc-800 rounded-lg flex items-center justify-center border border-zinc-700">
             <div className="text-center">
               <BarChart3 className="h-12 w-12 text-red-500 mx-auto mb-2" />

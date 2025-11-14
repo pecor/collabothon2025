@@ -30,13 +30,13 @@ export function Fleet() {
         const mappedVehicles = vehiclesData.map((v: Vehicle) => ({
           id: v.id.toString(),
           name: v.registration_no,
-          type: v.type === 'refrigerated' ? 'Chłodnia' : v.type === 'box' ? 'Box' : 'Plandeka',
+            type: v.type === 'refrigerated' ? 'Refrigerated' : v.type === 'box' ? 'Box' : 'Curtain-side',
           capacity: v.capacity_weight,
           available: v.status === 'available',
           features: [
-            v.has_forklift && 'Wózek widłowy',
-            'GPS',
-            v.type === 'refrigerated' && 'Chłodnia'
+              v.has_forklift && 'Forklift',
+              'GPS',
+              v.type === 'refrigerated' && 'Refrigerated'
           ].filter(Boolean) as string[],
           licensePlate: v.registration_no,
           matchScore: 85 // TODO: Calculate from AI
@@ -47,10 +47,10 @@ export function Fleet() {
           id: d.id.toString(),
           name: d.name,
           licenses: [
-            d.license_c && 'C',
-            d.license_ce && 'C+E',
-            d.license_adr && 'ADR',
-            d.forklift_certified && 'Wózek widłowy'
+              d.license_c && 'C',
+              d.license_ce && 'C+E',
+              d.license_adr && 'ADR',
+              d.forklift_certified && 'Forklift'
           ].filter(Boolean) as string[],
           available: d.is_active,
           experience: 10, // TODO: Add to backend model
