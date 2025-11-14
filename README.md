@@ -93,7 +93,67 @@ GET /api/orders/{id}/assign/
 - Szczegóły uprawnień każdego kierowcy
 - Informacje o przypisanej ciężarówce
 
-### 4. 📧 Import zleceń z maili
+### 4. 💰 Analiza i walidacja ceny zlecenia
+
+System automatycznie analizuje czy podana cena w zleceniu jest poprawna i opłacalna. trzeba zrobic csv na podstawie ktorej bedzie to liczyl
+
+**Endpoint:** `GET /api/orders/{id}/validate_price/`
+
+**Funkcje analizy ceny:**
+- **Porównanie z rynkowymi stawkami:**
+  - Analiza średnich stawek za km dla danego typu trasy
+  - Porównanie z historycznymi zleceniami o podobnych parametrach
+  - Uwzględnienie typu pojazdu (refrigerated, box, cargo)
+- **Kalkulacja rzeczywistych kosztów:**
+  - Koszty paliwa (na podstawie dystansu i typu pojazdu)
+  - Koszty kierowcy (stawka dzienna)
+  - Koszty utrzymania pojazdu
+  - Koszty dodatkowe (ADR, chłodnia, wózki widłowe)
+- **Walidacja marży:**
+  - Sprawdzenie czy marża jest powyżej minimum (np. 15%)
+  - Ostrzeżenia o niskiej rentowności
+  - Rekomendacje optymalnej ceny
+- **Analiza rentowności:**
+  - Obliczenie zysku (revenue - cost)
+  - Procent marży zysku
+  - Porównanie z benchmarkami branżowymi
+
+**Przykład odpowiedzi:**
+```json
+{
+  "order_id": 1,
+  "provided_revenue": 1800.00,
+  "estimated_costs": {
+    "fuel": 456.00,
+    "driver": 500.00,
+    "maintenance": 114.00,
+    "additional": 50.00,
+    "total": 1120.00
+  },
+  "estimated_profit": 680.00,
+  "profit_margin_percent": 37.78,
+  "validation_status": "valid",
+  "price_assessment": {
+    "market_average": 2000.00,
+    "price_difference_percent": -10.0,
+    "recommendation": "price_below_market",
+    "suggested_price": 2100.00
+  },
+  "warnings": [],
+  "recommendations": [
+    "Cena jest 10% poniżej średniej rynkowej",
+    "Rekomendowana cena: 2100 PLN dla lepszej marży"
+  ]
+}
+```
+
+**Statusy walidacji:**
+- `valid` - Cena jest poprawna i opłacalna
+- `low_margin` - Marża jest poniżej rekomendowanego minimum
+- `below_market` - Cena jest poniżej średniej rynkowej
+- `unprofitable` - Zlecenie jest nierentowne (ujemny zysk)
+
+### 5. 📧 Import zleceń z maili
 
 System umożliwia automatyczne dodawanie zleceń do bazy danych na podstawie maili.
 
@@ -183,6 +243,11 @@ collabothon2025/
 - `POST /api/orders/{id}/assign/` - **AI przypisanie kierowcy i pojazdu**
 - `GET /api/orders/assignment_status/` - Status przypisania zleceń
 - `GET /api/orders/active/` - Aktywne zlecenia
+- `GET /api/orders/{id}/validate_price/` - **Walidacja czy podana cena w zleceniu jest poprawna**
+- `GET /api/orders/{id}/compatible_drivers/` - Lista wszystkich kompatybilnych kierowców z odległościami i scoringiem
+- `POST /api/orders/bulk_create/` - Masowe tworzenie zleceń (batch import)
+- `GET /api/orders/{id}/route_analysis/` - Szczegółowa analiza trasy z kosztami i czasem
+- `GET /api/orders/profitability_report/` - Raport rentowności wszystkich zleceń z analizą ROI
 
 ### Kierowcy (Users)
 - `GET /api/users/` - Lista kierowców (filtrowanie po `country`, `city`, `vehicle_id`)
@@ -202,6 +267,13 @@ collabothon2025/
 ### Prawo transportowe
 - `GET /api/transport-laws/` - Przepisy transportowe wg kraju
 - `GET /api/holidays/` - Kalendarz świąt i zakazów
+
+### Analiza i raporty
+- `GET /api/orders/{id}/validate_price/` - **Walidacja ceny zlecenia** (porównanie z rynkiem, kalkulacja kosztów, analiza marży)
+- `GET /api/orders/{id}/compatible_drivers/` - **Lista kompatybilnych kierowców** (posortowana od najbliższego, z scoringiem i odległościami)
+- `POST /api/orders/bulk_create/` - **Masowe tworzenie zleceń** (batch import z CSV/JSON)
+- `GET /api/orders/{id}/route_analysis/` - **Szczegółowa analiza trasy** (koszty, czas, kraje tranzytowe, ograniczenia prawne)
+- `GET /api/orders/profitability_report/` - **Raport rentowności** (analiza ROI wszystkich zleceń, statystyki marży, najlepsze/ najgorsze zlecenia)
 
 ## 🛠️ Uruchomienie
 
@@ -241,15 +313,21 @@ Frontend uruchomi się na: `http://localhost:5173`
      - Sortuje ich od najbliższego do najdalszego
      - Wybiera najlepszego kierowcę i pojazd
 
-3. **Weryfikacja:**
+4. **Weryfikacja:**
    - System wyświetla listę wszystkich dostępnych kierowców
    - Pokazuje score kompatybilności i odległość
    - Użytkownik może zaakceptować lub wybrać innego kierowcę
 
-4. **Przypisanie:**
+5. **Przypisanie:**
    - System przypisuje kierowcę i pojazd do zlecenia
    - Aktualizuje status zlecenia na "assigned"
    - Wysyła powiadomienia
+
+6. **Raporty i analityka:**
+   - System generuje raporty rentowności
+   - Analizuje efektywność tras
+   - Identyfikuje najlepsze i najgorsze zlecenia
+   - Dostarcza insights do optymalizacji cen
 
 ## 🎯 Technologie
 
