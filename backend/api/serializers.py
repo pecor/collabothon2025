@@ -51,7 +51,25 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating orders with all form fields"""
+    """Serializer for creating orders with all required form fields"""
+    
+    # Make required fields explicit
+    cargo = serializers.PrimaryKeyRelatedField(queryset=Cargo.objects.all(), required=True)
+    route = serializers.PrimaryKeyRelatedField(queryset=Route.objects.all(), required=True)
+    planned_date = serializers.DateField(required=True)
+    cargo_type = serializers.CharField(max_length=255, required=True, help_text="e.g. Pallets, Boxes, Chemicals")
+    weight = serializers.FloatField(required=True, help_text="Weight in kg")
+    temperature = serializers.CharField(max_length=100, required=True, help_text="e.g. -18 to -20 or 'Ambient'")
+    loading_date = serializers.DateField(required=True)
+    unloading_date = serializers.DateField(required=True)
+    
+    # Optional fields
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
+    vehicle = serializers.PrimaryKeyRelatedField(queryset=Vehicle.objects.all(), required=False, allow_null=True)
+    driver = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
+    status = serializers.ChoiceField(choices=Order.STATUS_CHOICES, default='new', required=False)
+    special_requirements = serializers.CharField(required=False, allow_null=True, allow_blank=True, help_text="e.g. ADR, Forklift, Tarpaulin", style={'base_template': 'textarea.html'})
+    
     class Meta:
         model = Order
         fields = [
@@ -59,6 +77,27 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             'cargo_type', 'weight', 'temperature', 'special_requirements',
             'loading_date', 'unloading_date'
         ]
+    
+    def validate(self, data):
+        """Validate order data"""
+        # Validate that unloading_date is after loading_date
+        loading_date = data.get('loading_date')
+        unloading_date = data.get('unloading_date')
+        
+        if loading_date and unloading_date:
+            if unloading_date <= loading_date:
+                raise serializers.ValidationError({
+                    'unloading_date': 'Unloading date must be after loading date.'
+                })
+        
+        # Validate that weight is positive
+        weight = data.get('weight')
+        if weight is not None and weight <= 0:
+            raise serializers.ValidationError({
+                'weight': 'Weight must be greater than 0.'
+            })
+        
+        return data
 
 
 class TrackerSerializer(serializers.ModelSerializer):

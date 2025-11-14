@@ -93,6 +93,66 @@ class VehicleViewSet(viewsets.ModelViewSet):
     queryset = Vehicle.objects.all()
     serializer_class = VehicleSerializer
     
+    @extend_schema(
+        summary='Get available vehicle types',
+        description='Returns all available vehicle type choices',
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'choices': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'object',
+                            'properties': {
+                                'value': {'type': 'string'},
+                                'label': {'type': 'string'}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+    @action(detail=False, methods=['get'], url_path='select-type')
+    def select_type(self, request):
+        """Get available vehicle type choices"""
+        choices = [
+            {'value': value, 'label': label}
+            for value, label in Vehicle.TYPE_CHOICES
+        ]
+        return Response({'choices': choices})
+    
+    @extend_schema(
+        summary='Get available vehicle statuses',
+        description='Returns all available vehicle status choices',
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'choices': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'object',
+                            'properties': {
+                                'value': {'type': 'string'},
+                                'label': {'type': 'string'}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+    @action(detail=False, methods=['get'], url_path='select-status')
+    def select_status(self, request):
+        """Get available vehicle status choices"""
+        choices = [
+            {'value': value, 'label': label}
+            for value, label in Vehicle.STATUS_CHOICES
+        ]
+        return Response({'choices': choices})
+    
     @action(detail=False, methods=['get'])
     def available_vehicles(self, request):
         """Get available vehicles based on criteria"""
@@ -151,6 +211,36 @@ class RouteViewSet(viewsets.ModelViewSet):
     """
     queryset = Route.objects.all()
     serializer_class = RouteSerializer
+    
+    @extend_schema(
+        summary='Get available route statuses',
+        description='Returns all available route status choices',
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'choices': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'object',
+                            'properties': {
+                                'value': {'type': 'string'},
+                                'label': {'type': 'string'}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+    @action(detail=False, methods=['get'], url_path='select-status')
+    def select_status(self, request):
+        """Get available route status choices"""
+        choices = [
+            {'value': value, 'label': label}
+            for value, label in Route.STATUS_CHOICES
+        ]
+        return Response({'choices': choices})
     
     @action(detail=False, methods=['get'])
     def search(self, request):
@@ -235,6 +325,168 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return OrderCreateSerializer
         return OrderSerializer
+    
+    @extend_schema(
+        summary='Get available order statuses',
+        description='Returns all available order status choices for dropdown/buttons',
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'choices': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'object',
+                            'properties': {
+                                'value': {'type': 'string'},
+                                'label': {'type': 'string'}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+    @action(detail=False, methods=['get'], url_path='select-status')
+    def select_status(self, request):
+        """Get available order status choices"""
+        choices = [
+            {'value': value, 'label': label}
+            for value, label in Order.STATUS_CHOICES
+        ]
+        return Response({'choices': choices})
+    
+    @extend_schema(
+        summary='Get available cargo types',
+        description='Returns unique cargo types from existing orders plus common examples',
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'choices': {
+                        'type': 'array',
+                        'items': {'type': 'string'}
+                    }
+                }
+            }
+        }
+    )
+    @action(detail=False, methods=['get'], url_path='select-cargo-type')
+    def select_cargo_type(self, request):
+        """Get available cargo types (unique from database + common examples)"""
+        # Get unique cargo types from existing orders
+        existing_types = Order.objects.values_list('cargo_type', flat=True).distinct()
+        existing_types = [ct for ct in existing_types if ct]  # Filter out None/empty
+        
+        # Common cargo types (from help_text examples)
+        common_types = [
+            'Pallets',
+            'Boxes',
+            'Chemicals',
+            'Electronics',
+            'Food Products',
+            'Machinery',
+            'Textiles',
+            'Pharmaceuticals',
+            'Furniture',
+            'Automotive Parts',
+            'Fresh Vegetables',
+            'Frozen Goods',
+            'Liquids',
+            'Construction Materials',
+            'Paper Products',
+        ]
+        
+        # Combine and remove duplicates, sort alphabetically
+        all_types = sorted(set(existing_types + common_types))
+        
+        return Response({'choices': all_types})
+    
+    @extend_schema(
+        summary='Get available temperature options',
+        description='Returns common temperature options for cargo transport',
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'choices': {
+                        'type': 'array',
+                        'items': {'type': 'string'}
+                    }
+                }
+            }
+        }
+    )
+    @action(detail=False, methods=['get'], url_path='select-temperature')
+    def select_temperature(self, request):
+        """Get available temperature options"""
+        # Get unique temperatures from existing orders
+        existing_temps = Order.objects.values_list('temperature', flat=True).distinct()
+        existing_temps = [t for t in existing_temps if t]  # Filter out None/empty
+        
+        # Common temperature options (from help_text examples)
+        common_temps = [
+            'Ambient',
+            '2 to 4',
+            '2 to 8',
+            '-18 to -20',
+            '-15 to -18',
+            '-2 to 0',
+            '0 to 4',
+            '15 to 20',
+            'Frozen',
+            'Refrigerated',
+            'Cool',
+            'Room Temperature',
+        ]
+        
+        # Combine and remove duplicates, sort with Ambient first
+        all_temps = sorted(set(existing_temps + common_temps), key=lambda x: (x != 'Ambient', x))
+        
+        return Response({'choices': all_temps})
+    
+    @extend_schema(
+        summary='Get available special requirements',
+        description='Returns common special requirements options',
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'choices': {
+                        'type': 'array',
+                        'items': {'type': 'string'}
+                    }
+                }
+            }
+        }
+    )
+    @action(detail=False, methods=['get'], url_path='select-special-requirements')
+    def select_special_requirements(self, request):
+        """Get available special requirements options"""
+        # Get unique special requirements from existing orders
+        existing_reqs = Order.objects.values_list('special_requirements', flat=True).distinct()
+        existing_reqs = [r for r in existing_reqs if r]  # Filter out None/empty
+        
+        # Common special requirements (from help_text examples)
+        common_reqs = [
+            'ADR',
+            'Forklift',
+            'Tarpaulin',
+            'Refrigerated',
+            'Refrigerated ADR',
+            'Forklift Tarpaulin',
+            'Hazardous Materials',
+            'Oversized Load',
+            'Fragile',
+            'High Value',
+            'Time Sensitive',
+            'Customs Documentation',
+        ]
+        
+        # Combine and remove duplicates, sort alphabetically
+        all_reqs = sorted(set(existing_reqs + common_reqs))
+        
+        return Response({'choices': all_reqs})
     
     @action(detail=False, methods=['get'])
     def pending(self, request):
@@ -599,6 +851,36 @@ class HolidayViewSet(viewsets.ModelViewSet):
     """
     queryset = Holiday.objects.all()
     serializer_class = HolidaySerializer
+    
+    @extend_schema(
+        summary='Get available license restriction options',
+        description='Returns available license restriction/allowed choices',
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'choices': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'object',
+                            'properties': {
+                                'value': {'type': 'integer'},
+                                'label': {'type': 'string'}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+    @action(detail=False, methods=['get'], url_path='select-license-allowed')
+    def select_license_allowed(self, request):
+        """Get available license allowed/restricted choices"""
+        choices = [
+            {'value': value, 'label': label}
+            for value, label in [(0, 'Restricted'), (1, 'Allowed')]
+        ]
+        return Response({'choices': choices})
     
     @action(detail=False, methods=['get'])
     def check_date(self, request):

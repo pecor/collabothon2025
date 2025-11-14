@@ -123,12 +123,12 @@ class Order(models.Model):
     actual_end_date = models.DateTimeField(null=True, blank=True, verbose_name="Actual End Date")
     
     # Additional fields from form
-    cargo_type = models.CharField(max_length=255, null=True, blank=True, verbose_name="Cargo Type", help_text="e.g. Pallets, Boxes, Chemicals")
-    weight = models.FloatField(null=True, blank=True, verbose_name="Weight (kg)", help_text="Order weight override (if different from cargo weight)")
-    temperature = models.CharField(max_length=100, null=True, blank=True, verbose_name="Temperature (°C)", help_text="e.g. -18 to -20 or 'Ambient'")
+    cargo_type = models.CharField(max_length=255, verbose_name="Cargo Type", help_text="e.g. Pallets, Boxes, Chemicals")
+    weight = models.FloatField(verbose_name="Weight (kg)", help_text="Order weight (kg)")
+    temperature = models.CharField(max_length=100, verbose_name="Temperature (°C)", help_text="e.g. -18 to -20 or 'Ambient'")
     special_requirements = models.TextField(null=True, blank=True, verbose_name="Special Requirements", help_text="e.g. ADR, Forklift, Tarpaulin")
-    loading_date = models.DateField(null=True, blank=True, verbose_name="Loading Date")
-    unloading_date = models.DateField(null=True, blank=True, verbose_name="Unloading Date")
+    loading_date = models.DateField(verbose_name="Loading Date")
+    unloading_date = models.DateField(verbose_name="Unloading Date")
 
     class Meta:
         db_table = 'orders'
