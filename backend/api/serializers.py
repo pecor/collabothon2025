@@ -3,17 +3,44 @@ from .models import User, Vehicle, Route, Cargo, Order, Tracker, Holiday, Transp
 
 
 class UserSerializer(serializers.ModelSerializer):
+    current_vehicle_info = serializers.SerializerMethodField()
+    
     class Meta:
         model = User
         fields = '__all__'
+    
+    def get_current_vehicle_info(self, obj):
+        """Get current vehicle information"""
+        if obj.current_vehicle:
+            return {
+                'id': obj.current_vehicle.id,
+                'registration_no': obj.current_vehicle.registration_no,
+                'type': obj.current_vehicle.type,
+                'status': obj.current_vehicle.status
+            }
+        return None
 
 
 class VehicleSerializer(serializers.ModelSerializer):
     current_driver_name = serializers.CharField(source='current_driver.name', read_only=True)
+    current_driver_info = serializers.SerializerMethodField()
     
     class Meta:
         model = Vehicle
         fields = '__all__'
+    
+    def get_current_driver_info(self, obj):
+        """Get current driver information"""
+        if obj.current_driver:
+            return {
+                'id': obj.current_driver.id,
+                'name': obj.current_driver.name,
+                'email': obj.current_driver.email,
+                'phone': obj.current_driver.phone,
+                'current_country': obj.current_driver.current_country,
+                'current_city': obj.current_driver.current_city
+            }
+        return None
 
 
 class RouteSerializer(serializers.ModelSerializer):
@@ -40,7 +67,10 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     def get_route_info(self, obj):
-        if obj.route:
+        # Use origin and destination from Order if available, otherwise from Route
+        if obj.origin and obj.destination:
+            return f"{obj.origin} → {obj.destination}"
+        elif obj.route:
             return f"{obj.route.origin} → {obj.route.destination}"
         return None
     
@@ -57,6 +87,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     cargo = serializers.PrimaryKeyRelatedField(queryset=Cargo.objects.all(), required=True)
     route = serializers.PrimaryKeyRelatedField(queryset=Route.objects.all(), required=True)
     planned_date = serializers.DateField(required=True)
+    origin = serializers.CharField(max_length=255, required=True, help_text="Starting location")
+    destination = serializers.CharField(max_length=255, required=True, help_text="Destination location")
     cargo_type = serializers.CharField(max_length=255, required=True, help_text="e.g. Pallets, Boxes, Chemicals")
     weight = serializers.FloatField(required=True, help_text="Weight in kg")
     temperature = serializers.CharField(max_length=100, required=True, help_text="e.g. -18 to -20 or 'Ambient'")
@@ -79,6 +111,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             'user', 'cargo', 'route', 'planned_date', 'vehicle', 'driver', 'status',
+            'origin', 'destination',
             'cargo_type', 'weight', 'temperature', 'special_requirements',
             'loading_date', 'unloading_date', 'cost', 'revenue', 'profit'
         ]

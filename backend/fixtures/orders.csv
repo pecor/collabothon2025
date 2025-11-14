@@ -1,16 +1,16 @@
-user_id,cargo_id,route_id,planned_date,status,cargo_type,weight,temperature,special_requirements,loading_date,unloading_date,cost,revenue,profit
-,1,1,2025-11-20,new,Pallets,1500,Ambient,,2025-11-20,2025-11-22,1200,1800,600
-,2,2,2025-11-21,new,Boxes,800,Ambient,Forklift,2025-11-21,2025-11-23,950,1400,450
-3,3,3,2025-11-22,assigned,Chemicals,2000,-18 to -20,ADR,2025-11-22,2025-11-24,2800,4200,1400
-,4,4,2025-11-23,new,Electronics,1200,Ambient,,2025-11-23,2025-11-25,1100,1650,550
-5,5,5,2025-11-24,in_transit,Food Products,2500,2 to 4,Refrigerated,2025-11-24,2025-11-26,3200,4800,1600
-,6,6,2025-11-25,new,Machinery,3500,Ambient,Forklift,2025-11-25,2025-11-27,4500,6750,2250
-,7,7,2025-11-26,new,Textiles,900,Ambient,,2025-11-26,2025-11-28,850,1200,350
-8,8,8,2025-11-27,assigned,Pharmaceuticals,1800,2 to 8,Refrigerated ADR,2025-11-27,2025-11-29,3500,5250,1750
-,9,9,2025-11-28,new,Furniture,2200,Ambient,Forklift Tarpaulin,2025-11-28,2025-11-30,2800,4200,1400
-,10,10,2025-11-29,new,Automotive Parts,1500,Ambient,,2025-11-29,2025-12-01,1300,1950,650
-,3,2,2025-12-01,new,Chemicals,2000,-18 to -20,ADR,2025-12-01,2025-12-03,2800,4200,1400
-,5,4,2025-12-02,new,Food Products,2500,2 to 4,Refrigerated,2025-12-02,2025-12-04,3200,4800,1600
-,7,6,2025-12-03,new,Textiles,900,Ambient,,2025-12-03,2025-12-05,850,1200,350
-,9,8,2025-12-04,new,Furniture,2200,Ambient,Forklift Tarpaulin,2025-12-04,2025-12-06,2800,4200,1400
-,1,10,2025-12-05,new,Pallets,1500,Ambient,,2025-12-05,2025-12-07,1200,1800,600
+user_id,cargo_id,route_id,planned_date,status,origin,destination,cargo_type,weight,temperature,special_requirements,loading_date,unloading_date,cost,revenue,profit
+,1,1,2025-11-20,new,Warsaw,Berlin,Pallets,1500,Ambient,,2025-11-20,2025-11-22,1200,1800,600
+,2,2,2025-11-21,new,Krakow,Vienna,Boxes,800,Ambient,Forklift,2025-11-21,2025-11-23,950,1400,450
+3,3,3,2025-11-22,assigned,Gdansk,Hamburg,Chemicals,2000,-18 to -20,ADR,2025-11-22,2025-11-24,2800,4200,1400
+,4,4,2025-11-23,new,Poznan,Amsterdam,Electronics,1200,Ambient,,2025-11-23,2025-11-25,1100,1650,550
+5,5,5,2025-11-24,in_transit,Wroclaw,Prague,Food Products,2500,2 to 4,Refrigerated,2025-11-24,2025-11-26,3200,4800,1600
+,6,6,2025-11-25,new,Lodz,Munich,Machinery,3500,Ambient,Forklift,2025-11-25,2025-11-27,4500,6750,2250
+,7,7,2025-11-26,new,Katowice,Budapest,Textiles,900,Ambient,,2025-11-26,2025-11-28,850,1200,350
+8,8,8,2025-11-27,assigned,Szczecin,Copenhagen,Pharmaceuticals,1800,2 to 8,Refrigerated ADR,2025-11-27,2025-11-29,3500,5250,1750
+,9,9,2025-11-28,new,Lublin,Bratislava,Furniture,2200,Ambient,Forklift Tarpaulin,2025-11-28,2025-11-30,2800,4200,1400
+,10,10,2025-11-29,new,Bydgoszcz,Brussels,Automotive Parts,1500,Ambient,,2025-11-29,2025-12-01,1300,1950,650
+,3,2,2025-12-01,new,Krakow,Vienna,Chemicals,2000,-18 to -20,ADR,2025-12-01,2025-12-03,2800,4200,1400
+,5,4,2025-12-02,new,Poznan,Amsterdam,Food Products,2500,2 to 4,Refrigerated,2025-12-02,2025-12-04,3200,4800,1600
+,7,6,2025-12-03,new,Lodz,Munich,Textiles,900,Ambient,,2025-12-03,2025-12-05,850,1200,350
+,9,8,2025-12-04,new,Szczecin,Copenhagen,Furniture,2200,Ambient,Forklift Tarpaulin,2025-12-04,2025-12-06,2800,4200,1400
+,1,10,2025-12-05,new,Bydgoszcz,Brussels,Pallets,1500,Ambient,,2025-12-05,2025-12-07,1200,1800,600

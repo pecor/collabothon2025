@@ -31,8 +31,37 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing drivers/operators
     """
-    queryset = User.objects.all()
+    queryset = User.objects.select_related('current_vehicle').all()
     serializer_class = UserSerializer
+    
+    def get_queryset(self):
+        """Filter drivers by location and vehicle if provided"""
+        queryset = User.objects.select_related('current_vehicle').all()
+        
+        # Filter by country
+        country = self.request.query_params.get('country')
+        if country:
+            queryset = queryset.filter(current_country__icontains=country)
+        
+        # Filter by city
+        city = self.request.query_params.get('city')
+        if city:
+            queryset = queryset.filter(current_city__icontains=city)
+        
+        # Filter by vehicle
+        vehicle_id = self.request.query_params.get('vehicle_id')
+        if vehicle_id:
+            queryset = queryset.filter(current_vehicle_id=vehicle_id)
+        
+        # Filter by has vehicle
+        has_vehicle = self.request.query_params.get('has_vehicle')
+        if has_vehicle:
+            if has_vehicle.lower() == 'true':
+                queryset = queryset.filter(current_vehicle__isnull=False)
+            elif has_vehicle.lower() == 'false':
+                queryset = queryset.filter(current_vehicle__isnull=True)
+        
+        return queryset
     
     @action(detail=False, methods=['get'])
     def available_drivers(self, request):
@@ -42,8 +71,11 @@ class UserViewSet(viewsets.ModelViewSet):
         license_ce = request.query_params.get('license_ce', 'false').lower() == 'true'
         license_adr = request.query_params.get('license_adr', 'false').lower() == 'true'
         forklift = request.query_params.get('forklift_certified', 'false').lower() == 'true'
+        country = request.query_params.get('country')
+        city = request.query_params.get('city')
+        vehicle_id = request.query_params.get('vehicle_id')
         
-        drivers = User.objects.filter(is_active=True)
+        drivers = User.objects.filter(is_active=True).select_related('current_vehicle')
         
         if license_c:
             drivers = drivers.filter(license_c=True)
@@ -53,6 +85,12 @@ class UserViewSet(viewsets.ModelViewSet):
             drivers = drivers.filter(license_adr=True)
         if forklift:
             drivers = drivers.filter(forklift_certified=True)
+        if country:
+            drivers = drivers.filter(current_country__icontains=country)
+        if city:
+            drivers = drivers.filter(current_city__icontains=city)
+        if vehicle_id:
+            drivers = drivers.filter(current_vehicle_id=vehicle_id)
         
         # Filter out drivers already assigned on the given date
         if date:
@@ -61,6 +99,61 @@ class UserViewSet(viewsets.ModelViewSet):
                 status__in=['assigned', 'in_transit']
             ).values_list('driver_id', flat=True)
             drivers = drivers.exclude(id__in=assigned_drivers)
+        
+        serializer = self.get_serializer(drivers, many=True)
+        return Response(serializer.data)
+    
+    @extend_schema(
+        summary='Get drivers by location',
+        description='Get drivers filtered by country and/or city',
+        responses={
+            200: {
+                'type': 'array',
+                'items': {'$ref': '#/components/schemas/User'}
+            }
+        }
+    )
+    @action(detail=False, methods=['get'], url_path='by-location')
+    def by_location(self, request):
+        """Get drivers by location (country and/or city)"""
+        country = request.query_params.get('country')
+        city = request.query_params.get('city')
+        
+        drivers = User.objects.filter(is_active=True).select_related('current_vehicle')
+        
+        if country:
+            drivers = drivers.filter(current_country__icontains=country)
+        if city:
+            drivers = drivers.filter(current_city__icontains=city)
+        
+        serializer = self.get_serializer(drivers, many=True)
+        return Response(serializer.data)
+    
+    @extend_schema(
+        summary='Get drivers by vehicle',
+        description='Get drivers assigned to a specific vehicle',
+        responses={
+            200: {
+                'type': 'array',
+                'items': {'$ref': '#/components/schemas/User'}
+            }
+        }
+    )
+    @action(detail=False, methods=['get'], url_path='by-vehicle')
+    def by_vehicle(self, request):
+        """Get drivers assigned to a specific vehicle"""
+        vehicle_id = request.query_params.get('vehicle_id')
+        
+        if not vehicle_id:
+            return Response(
+                {'error': 'vehicle_id parameter is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        drivers = User.objects.filter(
+            current_vehicle_id=vehicle_id,
+            is_active=True
+        ).select_related('current_vehicle')
         
         serializer = self.get_serializer(drivers, many=True)
         return Response(serializer.data)
@@ -81,7 +174,16 @@ class UserViewSet(viewsets.ModelViewSet):
                 'license_ce': driver.license_ce,
                 'license_adr': driver.license_adr,
                 'forklift_certified': driver.forklift_certified
-            }
+            },
+            'current_location': {
+                'country': driver.current_country,
+                'city': driver.current_city
+            },
+            'current_vehicle': {
+                'id': driver.current_vehicle.id if driver.current_vehicle else None,
+                'registration_no': driver.current_vehicle.registration_no if driver.current_vehicle else None,
+                'type': driver.current_vehicle.type if driver.current_vehicle else None
+            } if driver.current_vehicle else None
         }
         return Response(stats)
 
@@ -90,8 +192,27 @@ class VehicleViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing vehicles
     """
-    queryset = Vehicle.objects.all()
+    queryset = Vehicle.objects.select_related('current_driver').all()
     serializer_class = VehicleSerializer
+    
+    def get_queryset(self):
+        """Filter vehicles by driver if provided"""
+        queryset = Vehicle.objects.select_related('current_driver').all()
+        
+        # Filter by driver
+        driver_id = self.request.query_params.get('driver_id')
+        if driver_id:
+            queryset = queryset.filter(current_driver_id=driver_id)
+        
+        # Filter by has driver
+        has_driver = self.request.query_params.get('has_driver')
+        if has_driver:
+            if has_driver.lower() == 'true':
+                queryset = queryset.filter(current_driver__isnull=False)
+            elif has_driver.lower() == 'false':
+                queryset = queryset.filter(current_driver__isnull=True)
+        
+        return queryset
     
     @extend_schema(
         summary='Get available vehicle types',
@@ -372,6 +493,22 @@ class OrderViewSet(viewsets.ModelViewSet):
     ViewSet for managing orders with AI-powered assignment
     """
     queryset = Order.objects.all()
+    
+    def get_queryset(self):
+        """Filter orders by origin and destination if provided"""
+        queryset = Order.objects.all()
+        
+        # Filter by origin
+        origin = self.request.query_params.get('origin')
+        if origin:
+            queryset = queryset.filter(origin__icontains=origin)
+        
+        # Filter by destination
+        destination = self.request.query_params.get('destination')
+        if destination:
+            queryset = queryset.filter(destination__icontains=destination)
+        
+        return queryset
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -683,7 +820,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         compatible_vehicles = compatible_vehicles.exclude(id__in=assigned_vehicles)
         
         # Find compatible drivers
-        compatible_drivers = User.objects.filter(is_active=True)
+        compatible_drivers = User.objects.filter(is_active=True).select_related('current_vehicle')
         
         # Check special requirements for licenses
         needs_adr = (order.special_requirements and 'adr' in order.special_requirements.lower()) or cargo.license_adr_required
@@ -704,6 +841,43 @@ class OrderViewSet(viewsets.ModelViewSet):
             status__in=['assigned', 'in_transit']
         ).values_list('driver_id', flat=True)
         compatible_drivers = compatible_drivers.exclude(id__in=assigned_drivers)
+        
+        # Prefer drivers with assigned vehicles
+        # Also prefer drivers in the origin country/city
+        # Use origin from Order if available, otherwise from Route
+        origin_str = (order.origin or (route.origin if route else '')).lower()
+        origin_country = None
+        origin_city = None
+        
+        # Try to extract country and city from origin (simple heuristic)
+        # This could be enhanced with geocoding
+        if 'poland' in origin_str or 'polska' in origin_str or 'warsaw' in origin_str or 'krakow' in origin_str:
+            origin_country = 'Poland'
+        elif 'germany' in origin_str or 'niemcy' in origin_str or 'berlin' in origin_str or 'munich' in origin_str:
+            origin_country = 'Germany'
+        elif 'czech' in origin_str or 'prague' in origin_str:
+            origin_country = 'Czech Republic'
+        
+        # Prefer drivers in origin country and with assigned vehicles
+        # We'll sort manually after fetching to prioritize correctly
+        if origin_country:
+            # Annotate to prioritize drivers in origin country
+            from django.db.models import Case, When, IntegerField
+            compatible_drivers = compatible_drivers.annotate(
+                location_match=Case(
+                    When(current_country__iexact=origin_country, then=1),
+                    default=0,
+                    output_field=IntegerField()
+                ),
+                has_vehicle=Case(
+                    When(current_vehicle__isnull=False, then=1),
+                    default=0,
+                    output_field=IntegerField()
+                )
+            ).order_by('-location_match', '-has_vehicle')
+        else:
+            # Just prefer drivers with assigned vehicles
+            compatible_drivers = compatible_drivers.order_by('-current_vehicle_id')
         
         # Check for holiday restrictions
         warnings = []
@@ -753,8 +927,25 @@ class OrderViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_404_NOT_FOUND)
         
         # Select best vehicle and driver (simplified - would use AI scoring)
-        selected_vehicle = compatible_vehicles.first()
-        selected_driver = compatible_drivers.first()
+        # Prefer vehicles that are already assigned to compatible drivers
+        selected_vehicle = None
+        selected_driver = None
+        
+        # First, try to find a driver with an assigned vehicle that matches requirements
+        for driver in compatible_drivers:
+            if driver.current_vehicle:
+                # Check if driver's vehicle is compatible
+                if driver.current_vehicle in compatible_vehicles:
+                    # Check if vehicle is not already assigned on this date
+                    if driver.current_vehicle.id not in assigned_vehicles:
+                        selected_driver = driver
+                        selected_vehicle = driver.current_vehicle
+                        break
+        
+        # If no driver with assigned vehicle found, select separately
+        if not selected_vehicle or not selected_driver:
+            selected_vehicle = compatible_vehicles.first()
+            selected_driver = compatible_drivers.first()
         
         # Calculate estimated profit (simplified formula)
         # Real implementation would use AI model
@@ -770,10 +961,15 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.status = 'assigned'
         order.save()
         
-        # Update vehicle status
+        # Update vehicle status and link to driver
         selected_vehicle.status = 'in_transit'
         selected_vehicle.current_driver = selected_driver
         selected_vehicle.save()
+        
+        # Update driver's current vehicle assignment (if not already set)
+        if selected_driver.current_vehicle != selected_vehicle:
+            selected_driver.current_vehicle = selected_vehicle
+            selected_driver.save()
         
         response_data = {
             'order_id': order.id,

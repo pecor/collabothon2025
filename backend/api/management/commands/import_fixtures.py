@@ -55,6 +55,17 @@ class Command(BaseCommand):
         with open(file_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
+                # Handle optional new fields
+                def get_field_value(field_name):
+                    """Get field value or None if empty"""
+                    value = row.get(field_name, '').strip()
+                    return value if value else None
+                
+                def get_int_value(field_name):
+                    """Get int value or None if empty"""
+                    value = get_field_value(field_name)
+                    return int(value) if value else None
+                
                 User.objects.create(
                     name=row['name'],
                     email=row['email'],
@@ -64,6 +75,9 @@ class Command(BaseCommand):
                     license_adr=row['license_adr'].lower() == 'true',
                     forklift_certified=row['forklift_certified'].lower() == 'true',
                     is_active=row['is_active'].lower() == 'true',
+                    current_vehicle_id=get_int_value('current_vehicle_id'),
+                    current_country=get_field_value('current_country'),
+                    current_city=get_field_value('current_city'),
                 )
         self.stdout.write(self.style.SUCCESS(f'Imported {User.objects.count()} users'))
 
@@ -164,6 +178,8 @@ class Command(BaseCommand):
                     route_id=int(row['route_id']),
                     planned_date=row['planned_date'],
                     status=row['status'],
+                    origin=get_field_value('origin') or row.get('origin', '').strip(),
+                    destination=get_field_value('destination') or row.get('destination', '').strip(),
                     cargo_type=get_field_value('cargo_type'),
                     weight=get_float_value('weight'),
                     temperature=get_field_value('temperature'),

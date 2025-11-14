@@ -12,6 +12,11 @@ class User(models.Model):
     license_adr = models.BooleanField(default=False, verbose_name="ADR Certification")
     forklift_certified = models.BooleanField(default=False, verbose_name="Forklift Certification")
     is_active = models.BooleanField(default=True, verbose_name="Is Active")
+    
+    # Current assignment and location
+    current_vehicle = models.ForeignKey('Vehicle', on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_driver', verbose_name="Current Vehicle")
+    current_country = models.CharField(max_length=100, null=True, blank=True, verbose_name="Current Country")
+    current_city = models.CharField(max_length=100, null=True, blank=True, verbose_name="Current City")
 
     class Meta:
         db_table = 'users'
@@ -42,7 +47,7 @@ class Vehicle(models.Model):
     capacity_volume = models.FloatField(verbose_name="Max Volume Capacity (m³)")
     has_forklift = models.BooleanField(default=False, verbose_name="Has Forklift")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available', verbose_name="Status")
-    current_driver = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='current_vehicle', verbose_name="Current Driver")
+    current_driver = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='driven_vehicle', verbose_name="Current Driver")
 
     class Meta:
         db_table = 'vehicles'
@@ -121,6 +126,10 @@ class Order(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True, verbose_name="Creation Date")
     planned_date = models.DateField(verbose_name="Planned Departure Date")
     actual_end_date = models.DateTimeField(null=True, blank=True, verbose_name="Actual End Date")
+    
+    # Location fields
+    origin = models.CharField(max_length=255, verbose_name="Origin", help_text="Starting location")
+    destination = models.CharField(max_length=255, verbose_name="Destination", help_text="Destination location")
     
     # Additional fields from form
     cargo_type = models.CharField(max_length=255, verbose_name="Cargo Type", help_text="e.g. Pallets, Boxes, Chemicals")

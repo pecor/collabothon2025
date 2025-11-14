@@ -1,169 +1,273 @@
 # TruckAI - Collabothon 2025
 
-Inteligentny system doboru zleceń transportowych z wykorzystaniem AI.
+Inteligentny system doboru zleceń transportowych z wykorzystaniem AI do optymalizacji tras i przypisywania kierowców.
 
-## 🚀 Struktura projektu
+## 🚀 Główne funkcjonalności
+
+### 1. 🤖 Analiza AI tras z automatycznym przypisaniem kierowców
+
+System automatycznie analizuje zlecenia i przypisuje najbliższego dostępnego kierowcę, minimalizując koszty transportu.
+
+**Endpoint:** `POST /api/orders/{id}/assign/`
+
+**Jak działa:**
+1. **Analiza zlecenia** - System sprawdza wymagania zlecenia (typ towaru, waga, temperatura, wymagania specjalne)
+2. **Wybór najbliższego kierowcy** - AI wybiera kierowcę na podstawie:
+   - Lokalizacji (kraj i miasto) - preferuje kierowców najbliżej miejsca załadunku
+   - Dostępności w dniu zlecenia
+   - Uprawnień (licencje C, C+E, ADR, certyfikaty wózków widłowych)
+   - Przypisanej ciężarówki (preferuje kierowców z już przypisanym pojazdem)
+3. **Minimalizacja kosztów** - System wybiera kierowcę najbliżej trasy, aby zminimalizować:
+   - Koszty dojazdu do miejsca załadunku
+   - Czas oczekiwania
+   - Puste przebiegi
+
+**Przykład odpowiedzi:**
+```json
+{
+  "order_id": 1,
+  "assigned_vehicle": {
+    "id": 5,
+    "registration_no": "WX56789",
+    "type": "refrigerated"
+  },
+  "assigned_driver": {
+    "id": 3,
+    "name": "Anna Wiśniewska",
+    "current_country": "Poland",
+    "current_city": "Warsaw"
+  },
+  "estimated_profit": 1250.50,
+  "assignment_reasons": [
+    "Vehicle WX56789 meets all requirements",
+    "Driver Anna Wiśniewska has required licenses",
+    "Driver located in origin country (Poland)",
+    "Both available on 2025-12-01"
+  ]
+}
+```
+
+### 2. ⚖️ Analiza prawa transportowego - kto może jechać
+
+System automatycznie sprawdza przepisy transportowe i wyświetla listę wszystkich kierowców, którzy mogą wykonać zlecenie.
+
+**Funkcje analizy prawnej:**
+- **Sprawdzanie uprawnień kierowców:**
+  - Licencja C (kategoria podstawowa)
+  - Licencja C+E (z przyczepą)
+  - Certyfikat ADR (materiały niebezpieczne)
+  - Certyfikat wózków widłowych
+- **Walidacja świąt i zakazów:**
+  - Sprawdzanie kalendarza świąt w krajach tranzytowych
+  - Weryfikacja zakazów ruchu dla kategorii pojazdów
+  - Ostrzeżenia o ograniczeniach prawnych
+- **Analiza przepisów krajowych:**
+  - Sprawdzanie przepisów transportowych dla każdego kraju na trasie
+  - Weryfikacja wymagań dotyczących dokumentów
+  - Walidacja limitów czasu pracy
+
+**Endpoint do sprawdzania dostępnych kierowców:**
+```
+GET /api/users/available_drivers/?date=2025-12-01&license_c=true&license_adr=true&country=Poland
+```
+
+### 3. 📋 Lista truckerów w kolejności od najbliższego do najdalszego
+
+System wyświetla wszystkich dostępnych kierowców, którzy spełniają wymagania zlecenia, posortowanych według odległości od miejsca załadunku.
+
+**Sortowanie kierowców:**
+1. **Najbliżsi geograficznie** - kierowcy w tym samym kraju/mieście co miejsce załadunku
+2. **Z przypisaną ciężarówką** - preferowani kierowcy z już przypisanym pojazdem
+3. **Z odpowiednimi uprawnieniami** - kierowcy spełniający wszystkie wymagania prawne
+4. **Dostępni w terminie** - kierowcy wolni w dniu zlecenia
+
+**Endpoint:**
+```
+GET /api/orders/{id}/assign/
+```
+
+**Odpowiedź zawiera:**
+- Listę wszystkich kompatybilnych kierowców
+- Odległość od miejsca załadunku
+- Score kompatybilności (0-100%)
+- Szczegóły uprawnień każdego kierowcy
+- Informacje o przypisanej ciężarówce
+
+### 4. 📧 Import zleceń z maili
+
+System umożliwia automatyczne dodawanie zleceń do bazy danych na podstawie maili.
+
+**Funkcje:**
+- **Upload maila** - możliwość przesłania pliku email (.eml, .msg) lub wklejenia treści
+- **Automatyczna ekstrakcja danych przez AI:**
+  - Miejsce załadunku i rozładunku
+  - Data załadunku i rozładunku
+  - Typ towaru, waga, wymiary
+  - Wymagania specjalne (temperatura, ADR, wózki widłowe)
+  - Informacje o kliencie
+- **Weryfikacja i edycja** - możliwość sprawdzenia i poprawienia wyekstrahowanych danych przed dodaniem do bazy
+- **Automatyczne tworzenie zlecenia** - po weryfikacji zlecenie jest automatycznie dodawane do systemu
+
+**Endpoint:**
+```
+POST /api/orders/
+Content-Type: application/json
+
+{
+  "origin": "Warsaw, Poland",
+  "destination": "Berlin, Germany",
+  "cargo": 1,
+  "route": 1,
+  "planned_date": "2025-12-01",
+  "cargo_type": "Pallets",
+  "weight": 1500,
+  "temperature": "Ambient",
+  "loading_date": "2025-12-01",
+  "unloading_date": "2025-12-03"
+}
+```
+
+## 🏗️ Struktura projektu
 
 ```
 collabothon2025/
-├── backend/          # Django/FastAPI backend
-├── frontend/         # React + TypeScript frontend
-│   └── logistic/     # Główna aplikacja
+├── backend/                    # Django REST Framework backend
+│   ├── api/
+│   │   ├── models.py          # Modele danych (User, Vehicle, Order, Route, Cargo)
+│   │   ├── views.py           # Endpointy API z logiką AI
+│   │   ├── serializers.py     # Serializery Django REST
+│   │   └── management/        # Komendy zarządzania (import fixtures)
+│   ├── config/
+│   │   └── settings.py        # Konfiguracja Django (CORS, baza danych)
+│   └── fixtures/              # Dane testowe (CSV)
+│       ├── users.csv          # Kierowcy z lokalizacją i przypisanymi ciężarówkami
+│       ├── vehicles.csv       # Pojazdy
+│       ├── orders.csv         # Zlecenia z origin/destination
+│       ├── routes.csv         # Trasy
+│       └── ...
+├── frontend/                   # React + TypeScript frontend
+│   └── logistic/
 │       └── src/
-│           ├── App.tsx           # 🏠 STRONA GŁÓWNA
-│           └── components/ui/    # Komponenty shadcn/ui
-└── pitchdeck-pl.md  # Pitch deck projektu
+│           ├── pages/
+│           │   ├── Home.tsx           # Strona główna
+│           │   ├── AddOrder.tsx      # Dodawanie zleceń (formularz + upload maila)
+│           │   ├── Fleet.tsx         # Flota i kierowcy
+│           │   ├── Matching.tsx      # Propozycje AI
+│           │   └── ...
+│           └── components/
+└── README.md                   # Ten plik
 ```
 
-## 🎨 Frontend - Strona główna
+## 🎯 Kluczowe modele danych
 
-**Lokalizacja:** `frontend/logistic/src/App.tsx`
+### User (Kierowca)
+- **Lokalizacja:** `current_country`, `current_city` - aktualna lokalizacja kierowcy
+- **Przypisana ciężarówka:** `current_vehicle` - ForeignKey do Vehicle
+- **Uprawnienia:** `license_c`, `license_ce`, `license_adr`, `forklift_certified`
 
-### Co zawiera strona główna:
+### Order (Zlecenie)
+- **Lokalizacja:** `origin`, `destination` - miejsce załadunku i rozładunku
+- **Parametry:** `cargo_type`, `weight`, `temperature`, `special_requirements`
+- **Daty:** `loading_date`, `unloading_date`, `planned_date`
+- **Finanse:** `cost`, `revenue`, `profit`
 
-1. **Hero Section** - Główny przekaz z CTA
-   - Tytuł: "Automatyzacja logistyki z mocą AI"
-   - Badge z opisem systemu
-   - 2 przyciski CTA:
-     - "Rozpocznij dobieranie zlecenia" (primary)
-     - "Zobacz demo" (outline)
+### Vehicle (Pojazd)
+- **Przypisany kierowca:** `current_driver` - ForeignKey do User
+- **Parametry:** `type`, `capacity_weight`, `capacity_volume`, `has_forklift`
 
-2. **Statystyki (3 karty)**
-   - 80% krótszy czas obsługi
-   - 15-25% wyższe marże
-   - 100% zgodność z przepisami
+## 🔌 Główne endpointy API
 
-3. **Sekcja "Jak działa TruckAI?" (4 karty)**
-   - Automatyczny dobór zleceń
-   - Maksymalizacja zysku
-   - Walidator wymagań
-   - Tracking i Analytics
+### Zlecenia (Orders)
+- `GET /api/orders/` - Lista wszystkich zleceń (filtrowanie po `origin`, `destination`)
+- `POST /api/orders/` - Utworzenie nowego zlecenia
+- `POST /api/orders/{id}/assign/` - **AI przypisanie kierowcy i pojazdu**
+- `GET /api/orders/assignment_status/` - Status przypisania zleceń
+- `GET /api/orders/active/` - Aktywne zlecenia
 
-4. **Sekcja CTA końcowa**
-   - Niebieska karta z głównym Call-to-Action
-   - "Wybierz zlecenie do optymalizacji"
+### Kierowcy (Users)
+- `GET /api/users/` - Lista kierowców (filtrowanie po `country`, `city`, `vehicle_id`)
+- `GET /api/users/available_drivers/` - Dostępni kierowcy z filtrami
+- `GET /api/users/by-location/` - Kierowcy wg lokalizacji
+- `GET /api/users/by-vehicle/` - Kierowcy przypisani do pojazdu
+- `GET /api/users/{id}/statistics/` - Statystyki kierowcy
 
-### Użyte komponenty shadcn/ui:
-- `Button` - różne warianty (default, outline, secondary)
-- `Card` + `CardHeader` + `CardTitle` + `CardDescription` + `CardContent`
+### Pojazdy (Vehicles)
+- `GET /api/vehicles/` - Lista pojazdów (filtrowanie po `driver_id`, `has_driver`)
+- `GET /api/vehicles/available_vehicles/` - Dostępne pojazdy
 
-### Ikony (lucide-react):
-- `Truck` - logo i CTA
-- `Clock` - oszczędność czasu
-- `TrendingUp` - wzrost marż
-- `Shield` - zgodność
-- `Zap` - automatyzacja
-- `BarChart3` - analytics
+### Trasy (Routes)
+- `GET /api/routes/calculate/` - Oblicz trasę z Google Maps API
+- `POST /api/routes/optimize/` - Optymalizacja trasy (profit/time/distance)
+
+### Prawo transportowe
+- `GET /api/transport-laws/` - Przepisy transportowe wg kraju
+- `GET /api/holidays/` - Kalendarz świąt i zakazów
 
 ## 🛠️ Uruchomienie
 
-### Frontend
+### Backend (Django)
+```bash
+cd backend
+python manage.py migrate
+python manage.py import_fixtures  # Import danych testowych
+python manage.py runserver
+```
+
+Backend uruchomi się na: `http://localhost:8000`
+API dokumentacja (Swagger): `http://localhost:8000/api/schema/swagger-ui/`
+
+### Frontend (React)
 ```bash
 cd frontend/logistic
 npm install
 npm run dev
 ```
 
-Aplikacja uruchomi się na: `http://localhost:5173`
+Frontend uruchomi się na: `http://localhost:5173`
 
-### Backend
-```bash
-cd backend
-# instrukcje wkrótce
-```
+## 📊 Przykładowy flow użytkownika
 
-## 📄 Strony aplikacji
+1. **Dodanie zlecenia:**
+   - Użytkownik wypełnia formularz lub uploaduje maila
+   - System ekstrahuje dane przez AI
+   - Zlecenie jest dodawane do bazy
 
-### 1. **Strona główna** (`src/pages/Home.tsx`) ✅
-Landing page z opisem systemu, statystykami i CTA
+2. **Analiza AI:**
+   - Użytkownik klika "Analizuj trasę i przypisz kierowcę"
+   - System:
+     - Sprawdza wymagania zlecenia
+     - Analizuje przepisy transportowe
+     - Znajduje wszystkich kompatybilnych kierowców
+     - Sortuje ich od najbliższego do najdalszego
+     - Wybiera najlepszego kierowcę i pojazd
 
-### 2. **Dodaj Zlecenie** (`src/pages/AddOrder.tsx`) ✅
-Widok do dodawania i analizy zleceń transportowych
+3. **Weryfikacja:**
+   - System wyświetla listę wszystkich dostępnych kierowców
+   - Pokazuje score kompatybilności i odległość
+   - Użytkownik może zaakceptować lub wybrać innego kierowcę
 
-**Komponenty:**
-- `OrderForm` - Ręczny formularz parametrów zlecenia
-- `EmailUpload` - Upload maila/pliku z automatyczną ekstrakcją AI
-- `RequirementsSummary` - Podsumowanie wymagań prawnych i technicznych
-
-**Funkcje:**
-- ✅ Formularz z parametrami: typ towaru, waga, wymiary, temperatura
-- ✅ Szczegóły załadunku/rozładunku (adresy, daty)
-- ✅ Upload maila z automatyczną ekstrakcją danych przez AI
-- ✅ Podgląd wykrytych parametrów z możliwością edycji
-- ✅ Automatyczna analiza wymagań (ADR, typ pojazdu, uprawnienia)
-- ✅ Rekomendacja typu pojazdu
-- ✅ Toggle między trybem ręcznym a AI
-
-### 3. **Flota i Kierowcy** (`src/pages/Fleet.tsx`) ✅
-- Lista pojazdów z parametrami i scoring
-- Lista kierowców z uprawnieniami
-- Wyszukiwarka i filtry
-
-### 4. **Wymagania i Walidacja** (`src/pages/Requirements.tsx`) ✅
-- Lista wymagań prawnych (kierowca, pojazd, szkolenia)
-- Walidacja dat z kalendarzem świąt
-- Sprawdzanie zakazów ruchu
-
-### 5. **Propozycje AI** (`src/pages/Matching.tsx`) ✅
-- Rekomendowane zestawy kierowca-pojazd
-- Scoring 0-100% z uzasadnieniem AI
-- Symulacja zyskowności (koszt, zysk, ETA)
-
-### 6. **Wizualizacja Trasy** (`src/pages/Route.tsx`) ✅
-- Placeholder mapy (Google Maps/OSM)
-- Waypoints z statusami
-- Monitoring pojazdu na żywo
-- Ograniczenia prawne na trasie
-
-### 7. **Dashboard Analityczny** (`src/pages/Dashboard.tsx`) ✅
-- Statystyki: zlecenia, ROI, czas realizacji
-- Wykresy efektywności
-- Case study najlepszych tras
-- Alerty i problemy
-
-### 8. **Dokumentacja API** (`src/pages/Docs.tsx`) ✅
-- Lista endpointów REST API
-- Architektura systemu
-- Modele AI i scoring
-- Quick Start guide
-- FAQ implementacyjne
-
-## 🧭 Nawigacja między stronami
-
-### Routing (React Router v6):
-```
-/ → Home (strona główna)
-/add-order → Dodaj zlecenie
-/fleet → Flota i kierowcy
-/requirements → Wymagania i walidacja
-/matching → Propozycje AI
-/route → Wizualizacja trasy
-/dashboard → Dashboard analityczny
-/docs → Dokumentacja API
-```
-
-### Flow użytkownika:
-```
-Home → AddOrder → Requirements → Matching → Route → Dashboard
-  ↓                                                       ↑
-Fleet ←------------------------------------------→ Docs
-```
-
-### Nawigacja w headerach:
-- **Home**: Flota | Dashboard | API Docs
-- **Każda strona**: ← Wstecz | Logo (→ Home)
-
-## 📝 Następne kroki
-
-Do dodania:
-- ✅ ~~Routing (React Router)~~ - **GOTOWE**
-- **Strona dopasowania** - wyniki AI matchingu kierowca-pojazd-zlecenie
-- **Dashboard** - tracking na żywo, analytics, raporty
-- **API Integration** - podłączenie backendu
+4. **Przypisanie:**
+   - System przypisuje kierowcę i pojazd do zlecenia
+   - Aktualizuje status zlecenia na "assigned"
+   - Wysyła powiadomienia
 
 ## 🎯 Technologie
 
+- **Backend:** Django 4.x, Django REST Framework, PostgreSQL
 - **Frontend:** React 19, TypeScript, Vite, TailwindCSS 4, shadcn/ui
-- **Backend:** Django/FastAPI (w development)
-- **AI:** Red Hat OpenShift AI, Llama Stack, Granite OSS
+- **AI/ML:** Red Hat OpenShift AI, Llama Stack, Granite OSS
+- **Maps:** Google Maps API (obliczanie tras, geocoding)
 - **Deploy:** Red Hat OpenShift (Kubernetes)
+
+## 📝 Następne kroki rozwoju
+
+- [ ] Integracja z systemem email (IMAP/POP3) do automatycznego importu
+- [ ] Rozszerzona analiza AI z machine learning do przewidywania kosztów
+- [ ] Real-time tracking pojazdów na trasie
+- [ ] Integracja z systemami płatności
+- [ ] Aplikacja mobilna dla kierowców
+- [ ] Dashboard analityczny z raportami ROI
+
+## 📄 Licencja
+
+Projekt stworzony na potrzeby Collabothon 2025.
