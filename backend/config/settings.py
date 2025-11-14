@@ -136,19 +136,22 @@ SPECTACULAR_SETTINGS = {
     'COMPONENT_SPLIT_REQUEST': True,
 }
 
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:5174",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-]
+# CORS settings - Allow all origins (development only)
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = False  # Cannot be True when CORS_ALLOW_ALL_ORIGINS is True
 
-CORS_ALLOW_CREDENTIALS = True
+# Alternative: If you need credentials, use whitelist instead:
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "http://127.0.0.1:3000",
+#     "http://localhost:5173",
+#     "http://localhost:5174",
+#     "http://127.0.0.1:5173",
+#     "http://127.0.0.1:5174",
+#     "http://localhost:8000",
+#     "http://127.0.0.1:8000",
+# ]
+# CORS_ALLOW_CREDENTIALS = True
 
 
 # Google Maps API
