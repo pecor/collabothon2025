@@ -1,0 +1,6 @@
+id,vehicle_id,current_location,distance_to_dest_km,estimated_arrival,tracking_points
+1,1,A1 Katowice-Gliwice,350.5,2025-11-21 14:30:00,"{}"
+2,3,A2 Poznań-Konin,280.0,2025-11-21 16:45:00,"{}"
+3,5,A4 Wrocław-Opole,195.3,2025-11-21 12:15:00,"{}"
+4,7,A1 Łódź-Piotrków,410.8,2025-11-22 09:20:00,"{}"
+5,9,A2 Warszawa-Łódź,125.6,2025-11-20 18:30:00,"{}"

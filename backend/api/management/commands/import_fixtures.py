@@ -2,8 +2,9 @@ import csv
 import os
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from api.models import User, Vehicle, Route, Cargo, Order, Holiday
-from datetime import timedelta
+from django.utils import timezone
+from api.models import User, Vehicle, Route, Cargo, Order, Holiday, Tracker
+from datetime import timedelta, datetime, timezone as dt_timezone
 
 
 class Command(BaseCommand):
@@ -38,6 +39,9 @@ class Command(BaseCommand):
                 
                 # Import Holidays
                 self.import_holidays(fixtures_dir)
+                
+                # Import Trackers
+                self.import_trackers(fixtures_dir)
 
             self.stdout.write(self.style.SUCCESS('Successfully imported all fixtures!'))
         except Exception as e:
@@ -155,3 +159,21 @@ class Command(BaseCommand):
                     license_adr_allowed=int(row['license_adr_allowed']),
                 )
         self.stdout.write(self.style.SUCCESS(f'Imported {Holiday.objects.count()} holidays'))
+
+    def import_trackers(self, fixtures_dir):
+        file_path = os.path.join(fixtures_dir, 'trackers.csv')
+        with open(file_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                # Parse datetime and set timezone
+                naive_dt = datetime.strptime(row['estimated_arrival'], '%Y-%m-%d %H:%M:%S')
+                estimated_arrival = timezone.make_aware(naive_dt, timezone=dt_timezone.utc)
+                
+                Tracker.objects.create(
+                    vehicle_id=int(row['vehicle_id']),
+                    current_location=row['current_location'],
+                    distance_to_dest_km=float(row['distance_to_dest_km']),
+                    estimated_arrival=estimated_arrival,
+                    tracking_points={},
+                )
+        self.stdout.write(self.style.SUCCESS(f'Imported {Tracker.objects.count()} trackers'))
