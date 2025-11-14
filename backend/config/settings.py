@@ -138,7 +138,7 @@ SPECTACULAR_SETTINGS = {
 
 # CORS settings - Allow all origins (development only)
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = False  # Cannot be True when CORS_ALLOW_ALL_ORIGINS is True
+CORS_ALLOW_CREDENTIALS = True
 
 # Alternative: If you need credentials, use whitelist instead:
 # CORS_ALLOWED_ORIGINS = [
