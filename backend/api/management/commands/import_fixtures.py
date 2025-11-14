@@ -3,7 +3,7 @@ import os
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
-from api.models import User, Vehicle, Route, Cargo, Order, Holiday, Tracker
+from api.models import User, Vehicle, Route, Cargo, Order, Holiday, Tracker, TransportLaw
 from datetime import timedelta, datetime, timezone as dt_timezone
 
 
@@ -42,6 +42,9 @@ class Command(BaseCommand):
                 
                 # Import Trackers
                 self.import_trackers(fixtures_dir)
+                
+                # Import Transport Laws
+                self.import_transport_laws(fixtures_dir)
 
             self.stdout.write(self.style.SUCCESS('Successfully imported all fixtures!'))
         except Exception as e:
@@ -177,3 +180,138 @@ class Command(BaseCommand):
                     tracking_points={},
                 )
         self.stdout.write(self.style.SUCCESS(f'Imported {Tracker.objects.count()} trackers'))
+    
+    def import_transport_laws(self, fixtures_dir):
+        """Import transport laws from CSV"""
+        file_path = os.path.join(fixtures_dir, 'truck_transport_law.csv')
+        
+        if not os.path.exists(file_path):
+            self.stdout.write(self.style.WARNING(f'Transport law CSV not found at {file_path}'))
+            return
+        
+        def parse_bool(value):
+            """Parse Yes/No or True/False to boolean"""
+            if not value or value.strip() == '':
+                return False
+            return value.strip().lower() in ['yes', 'true', '1']
+        
+        def parse_float(value):
+            """Parse float value, return None if empty"""
+            if not value or value.strip() == '':
+                return None
+            try:
+                return float(value)
+            except (ValueError, TypeError):
+                return None
+        
+        def parse_int(value):
+            """Parse int value, return None if empty"""
+            if not value or value.strip() == '':
+                return None
+            try:
+                return int(value)
+            except (ValueError, TypeError):
+                return None
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            count = 0
+            for row in reader:
+                TransportLaw.objects.update_or_create(
+                    country=row['Country'],
+                    defaults={
+                        'max_weight_ton': parse_float(row.get('Max_Weight_Ton')),
+                        'max_weight_special_case': row.get('Max_Weight_Special_Case') or None,
+                        'max_weight_special_value': parse_float(row.get('Max_Weight_Special_Value')),
+                        'max_length_m': parse_float(row.get('Max_Length_M')),
+                        'max_length_special_case': row.get('Max_Length_Special_Case') or None,
+                        'max_length_special_value': parse_float(row.get('Max_Length_Special_Value')),
+                        'max_width_m': parse_float(row.get('Max_Width_M')),
+                        'max_height_m': parse_float(row.get('Max_Height_M')),
+                        'oversize_permit_required': parse_bool(row.get('Oversize_Permit_Required')),
+                        'rest_45h_in_cabin_allowed': parse_bool(row.get('Rest_45h_In_Cabin_Allowed')),
+                        'rest_45h_special_note': row.get('Rest_45h_Special_Note') or None,
+                        'min_hotel_standard': row.get('Min_Hotel_Standard') or None,
+                        'hotel_invoice_required': parse_bool(row.get('Hotel_Invoice_Required')),
+                        'weekend_driving_ban': parse_bool(row.get('Weekend_Driving_Ban')),
+                        'ban_details': row.get('Ban_Details') or None,
+                        'ban_vehicle_type_restriction': row.get('Ban_Vehicle_Type_Restriction') or None,
+                        'ban_season_summer': parse_bool(row.get('Ban_Season_Summer')),
+                        'ban_summer_months': row.get('Ban_Summer_Months') or None,
+                        'emission_zone_lez': parse_bool(row.get('Emission_Zone_LEZ')),
+                        'emission_zone_cities': row.get('Emission_Zone_Cities') or None,
+                        'min_euro_class': row.get('Min_Euro_Class') or None,
+                        'min_euro_class_restriction': row.get('Min_Euro_Class_Restriction') or None,
+                        'lez_details': row.get('LEZ_Details') or None,
+                        'toll_system': row.get('Toll_System') or None,
+                        'toll_system_box_name': row.get('Toll_System_Box_Name') or None,
+                        'toll_payment_method': row.get('Toll_Payment_Method') or None,
+                        'toll_payment_special_notes': row.get('Toll_Payment_Special_Notes') or None,
+                        'tachograph_type_required': row.get('Tachograph_Type_Required') or None,
+                        'tachograph_mandatory_from_year': parse_int(row.get('Tachograph_Mandatory_From_Year')),
+                        'driver_cpc_required': parse_bool(row.get('Driver_CPC_Required')),
+                        'driver_cpc_hours': parse_int(row.get('Driver_CPC_Hours')),
+                        'driver_cpc_renewal_years': parse_int(row.get('Driver_CPC_Renewal_Years')),
+                        'a1_certificate_required': parse_bool(row.get('A1_Certificate_Required')),
+                        'a1_certificate_notes': row.get('A1_Certificate_Notes') or None,
+                        'a1_issuing_authority': row.get('A1_Issuing_Authority') or None,
+                        'required_documents': row.get('Required_Documents') or None,
+                        'cabotage_max_operations': parse_int(row.get('Cabotage_Max_Operations')),
+                        'cabotage_days_limit': parse_int(row.get('Cabotage_Days_Limit')),
+                        'cabotage_cooling_period_days': parse_int(row.get('Cabotage_Cooling_Period_Days')),
+                        'cross_border_reporting': parse_bool(row.get('Cross_Border_Reporting')),
+                        'cross_border_system': row.get('Cross_Border_System') or None,
+                        'load_securing_standard': row.get('Load_Securing_Standard') or None,
+                        'adr_certificate_required': parse_bool(row.get('ADR_Certificate_Required')),
+                        'adr_renewal_years': parse_int(row.get('ADR_Renewal_Years')),
+                        'adr_tunnel_restrictions_categories': row.get('ADR_Tunnel_Restrictions_Categories') or None,
+                        'vehicle_insurance_liability': row.get('Vehicle_Insurance_Liability') or None,
+                        'cargo_insurance_mandatory': parse_bool(row.get('Cargo_Insurance_Mandatory')),
+                        'cargo_insurance_special_note': row.get('Cargo_Insurance_Special_Note') or None,
+                        'winter_tires_required': parse_bool(row.get('Winter_Tires_Required')),
+                        'winter_tires_period_start': row.get('Winter_Tires_Period_Start') or None,
+                        'winter_tires_period_end': row.get('Winter_Tires_Period_End') or None,
+                        'winter_tires_min_tread_mm': parse_float(row.get('Winter_Tires_Min_Tread_MM')),
+                        'winter_tires_special_type': row.get('Winter_Tires_Special_Type') or None,
+                        'winter_tires_special_value_mm': parse_float(row.get('Winter_Tires_Special_Value_MM')),
+                        'snow_chains_required': parse_bool(row.get('Snow_Chains_Required')),
+                        'speed_limit_urban_kmh': parse_int(row.get('Speed_Limit_Urban_KMH')),
+                        'speed_limit_urban_special_time': row.get('Speed_Limit_Urban_Special_Time') or None,
+                        'speed_limit_urban_special_value': parse_float(row.get('Speed_Limit_Urban_Special_Value')),
+                        'speed_limit_rural_kmh': parse_int(row.get('Speed_Limit_Rural_KMH')),
+                        'speed_limit_rural_vehicle_type': row.get('Speed_Limit_Rural_Vehicle_Type') or None,
+                        'speed_limit_rural_special_value': parse_float(row.get('Speed_Limit_Rural_Special_Value')),
+                        'speed_limit_expressway_kmh': parse_int(row.get('Speed_Limit_Expressway_KMH')),
+                        'speed_limit_expressway_special_type': row.get('Speed_Limit_Expressway_Special_Type') or None,
+                        'speed_limit_expressway_special_value': parse_float(row.get('Speed_Limit_Expressway_Special_Value')),
+                        'speed_limit_highway_kmh': parse_int(row.get('Speed_Limit_Highway_KMH')),
+                        'speed_limit_highway_special_type': row.get('Speed_Limit_Highway_Special_Type') or None,
+                        'speed_limit_highway_special_value': parse_float(row.get('Speed_Limit_Highway_Special_Value')),
+                        'alcohol_limit_commercial_g_l': parse_float(row.get('Alcohol_Limit_Commercial_G_L')),
+                        'alcohol_limit_special_type': row.get('Alcohol_Limit_Special_Type') or None,
+                        'alcohol_limit_special_value': parse_float(row.get('Alcohol_Limit_Special_Value')),
+                        'overtaking_ban_exists': parse_bool(row.get('Overtaking_Ban_Exists')),
+                        'overtaking_ban_details': row.get('Overtaking_Ban_Details') or None,
+                        'parking_shortage_issue': parse_bool(row.get('Parking_Shortage_Issue')),
+                        'parking_shortage_level': row.get('Parking_Shortage_Level') or None,
+                        'equipment_item_1': row.get('Equipment_Item_1') or None,
+                        'equipment_item_2': row.get('Equipment_Item_2') or None,
+                        'equipment_item_3': row.get('Equipment_Item_3') or None,
+                        'equipment_item_4': row.get('Equipment_Item_4') or None,
+                        'equipment_item_5': row.get('Equipment_Item_5') or None,
+                        'equipment_special_item': row.get('Equipment_Special_Item') or None,
+                        'equipment_special_quantity': parse_float(row.get('Equipment_Special_Quantity')),
+                        'penalty_min_value': parse_float(row.get('Penalty_Min_Value')),
+                        'penalty_min_currency': row.get('Penalty_Min_Currency') or None,
+                        'penalty_max_value': parse_float(row.get('Penalty_Max_Value')),
+                        'penalty_max_currency': row.get('Penalty_Max_Currency') or None,
+                        'posting_declaration_required': parse_bool(row.get('Posting_Declaration_Required')),
+                        'posting_declaration_portal': row.get('Posting_Declaration_Portal') or None,
+                        'posting_declaration_extra_notes': row.get('Posting_Declaration_Extra_Notes') or None,
+                        'notes': row.get('Notes') or None,
+                        'law_reference_url': row.get('Law_Reference_URL') or None,
+                    }
+                )
+                count += 1
+        
+        self.stdout.write(self.style.SUCCESS(f'Imported {count} transport law records'))

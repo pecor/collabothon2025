@@ -1,6 +1,6 @@
 
 from django.contrib import admin
-from .models import User, Vehicle, Route, Cargo, Order, Tracker, Holiday
+from .models import User, Vehicle, Route, Cargo, Order, Tracker, Holiday, TransportLaw
 
 admin.site.register(User)
 admin.site.register(Vehicle)
@@ -9,3 +9,4 @@ admin.site.register(Cargo)
 admin.site.register(Order)
 admin.site.register(Tracker)
 admin.site.register(Holiday)
+admin.site.register(TransportLaw)

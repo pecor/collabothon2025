@@ -11,6 +11,7 @@ router.register(r'cargos', views.CargoViewSet, basename='cargo')
 router.register(r'orders', views.OrderViewSet, basename='order')
 router.register(r'trackers', views.TrackerViewSet, basename='tracker')
 router.register(r'holidays', views.HolidayViewSet, basename='holiday')
+router.register(r'transport-laws', views.TransportLawViewSet, basename='transport-law')
 
 urlpatterns = [
     path('', include(router.urls)),

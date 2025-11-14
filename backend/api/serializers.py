@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Vehicle, Route, Cargo, Order, Tracker, Holiday
+from .models import User, Vehicle, Route, Cargo, Order, Tracker, Holiday, TransportLaw
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -124,3 +124,10 @@ class ProfitCalculationSerializer(serializers.Serializer):
     vehicle_id = serializers.IntegerField(required=False)
     distance_km = serializers.FloatField(required=False)
     estimated_revenue = serializers.FloatField(required=False)
+
+
+class TransportLawSerializer(serializers.ModelSerializer):
+    """Serializer for Transport Law regulations"""
+    class Meta:
+        model = TransportLaw
+        fields = '__all__'
