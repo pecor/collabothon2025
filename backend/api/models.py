@@ -129,6 +129,11 @@ class Order(models.Model):
     special_requirements = models.TextField(null=True, blank=True, verbose_name="Special Requirements", help_text="e.g. ADR, Forklift, Tarpaulin")
     loading_date = models.DateField(verbose_name="Loading Date")
     unloading_date = models.DateField(verbose_name="Unloading Date")
+    
+    # Financial fields
+    cost = models.FloatField(null=True, blank=True, verbose_name="Cost", help_text="Total cost of the order")
+    revenue = models.FloatField(null=True, blank=True, verbose_name="Revenue", help_text="Total revenue from the order")
+    profit = models.FloatField(null=True, blank=True, verbose_name="Profit", help_text="Profit (revenue - cost)")
 
     class Meta:
         db_table = 'orders'

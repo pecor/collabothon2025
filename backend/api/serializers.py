@@ -70,12 +70,17 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     status = serializers.ChoiceField(choices=Order.STATUS_CHOICES, default='new', required=False)
     special_requirements = serializers.CharField(required=False, allow_null=True, allow_blank=True, help_text="e.g. ADR, Forklift, Tarpaulin", style={'base_template': 'textarea.html'})
     
+    # Financial fields (optional)
+    cost = serializers.FloatField(required=False, allow_null=True, help_text="Total cost of the order")
+    revenue = serializers.FloatField(required=False, allow_null=True, help_text="Total revenue from the order")
+    profit = serializers.FloatField(required=False, allow_null=True, read_only=True, help_text="Profit (revenue - cost), calculated automatically")
+    
     class Meta:
         model = Order
         fields = [
             'user', 'cargo', 'route', 'planned_date', 'vehicle', 'driver', 'status',
             'cargo_type', 'weight', 'temperature', 'special_requirements',
-            'loading_date', 'unloading_date'
+            'loading_date', 'unloading_date', 'cost', 'revenue', 'profit'
         ]
     
     def validate(self, data):
@@ -97,7 +102,47 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 'weight': 'Weight must be greater than 0.'
             })
         
+        # Validate financial fields
+        cost = data.get('cost')
+        revenue = data.get('revenue')
+        
+        if cost is not None and cost < 0:
+            raise serializers.ValidationError({
+                'cost': 'Cost cannot be negative.'
+            })
+        
+        if revenue is not None and revenue < 0:
+            raise serializers.ValidationError({
+                'revenue': 'Revenue cannot be negative.'
+            })
+        
         return data
+    
+    def create(self, validated_data):
+        """Create order and calculate profit if cost and revenue are provided"""
+        # Calculate profit if both cost and revenue are provided
+        cost = validated_data.get('cost')
+        revenue = validated_data.get('revenue')
+        
+        if cost is not None and revenue is not None:
+            validated_data['profit'] = revenue - cost
+        
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        """Update order and recalculate profit if cost or revenue changed"""
+        # Recalculate profit if cost or revenue are being updated
+        cost = validated_data.get('cost', instance.cost)
+        revenue = validated_data.get('revenue', instance.revenue)
+        
+        if cost is not None and revenue is not None:
+            validated_data['profit'] = revenue - cost
+        elif 'cost' in validated_data or 'revenue' in validated_data:
+            # If one is being set to None, set profit to None too
+            if cost is None or revenue is None:
+                validated_data['profit'] = None
+        
+        return super().update(instance, validated_data)
 
 
 class TrackerSerializer(serializers.ModelSerializer):

@@ -258,6 +258,58 @@ class RouteViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(routes, many=True)
         return Response(serializer.data)
     
+    @extend_schema(
+        summary='Optimize route selection',
+        description='Optimize route selection based on criteria (profit, time, or distance)',
+        request=RouteOptimizationSerializer,
+        examples=[
+            OpenApiExample(
+                'Optimize for profit',
+                value={
+                    'origin': 'Warsaw, Poland',
+                    'destination': 'Berlin, Germany',
+                    'cargo_ids': [1, 2, 3],
+                    'planned_date': '2025-12-01',
+                    'optimize_for': 'profit'
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                'Optimize for distance',
+                value={
+                    'origin': 'Krakow, Poland',
+                    'destination': 'Prague, Czech Republic',
+                    'cargo_ids': [4, 5],
+                    'planned_date': '2025-12-05',
+                    'optimize_for': 'distance'
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                'Optimize for time',
+                value={
+                    'origin': 'Gdansk, Poland',
+                    'destination': 'Stockholm, Sweden',
+                    'cargo_ids': [6],
+                    'planned_date': '2025-12-10',
+                    'optimize_for': 'time'
+                },
+                request_only=True,
+            ),
+        ],
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'optimized_routes': {
+                        'type': 'array',
+                        'items': {'$ref': '#/components/schemas/Route'}
+                    },
+                    'optimization_type': {'type': 'string'}
+                }
+            }
+        }
+    )
     @action(detail=False, methods=['post'])
     def optimize(self, request):
         """Optimize route selection based on criteria"""
@@ -1263,21 +1315,37 @@ def calculate_route(request):
         
         # Step 3: Extract countries and cities from route using reverse geocoding
         countries_passed = set()
+        countries_info = []  # List with order and details
         cities_passed = []
+        seen_countries = set()  # Track countries to maintain order
         
-        # Sample waypoints to avoid too many API calls
-        sample_waypoints = waypoints[::max(1, len(waypoints) // 15)][:10]
+        # Sample waypoints to avoid too many API calls (but get enough to detect all countries)
+        sample_waypoints = waypoints[::max(1, len(waypoints) // 20)][:15]
         
-        for waypoint in sample_waypoints:
+        for idx, waypoint in enumerate(sample_waypoints):
             try:
                 reverse_geocode = gmaps.reverse_geocode((waypoint['lat'], waypoint['lng']))
                 if reverse_geocode:
                     address_components = reverse_geocode[0].get('address_components', [])
                     
-                    # Extract country
+                    # Extract country with code
+                    country_name = None
+                    country_code = None
                     for component in address_components:
                         if 'country' in component.get('types', []):
-                            countries_passed.add(component['long_name'])
+                            country_name = component['long_name']
+                            country_code = component['short_name']
+                            countries_passed.add(country_name)
+                            
+                            # Add to countries_info if not seen before (maintain order)
+                            if country_code not in seen_countries:
+                                seen_countries.add(country_code)
+                                countries_info.append({
+                                    'name': country_name,
+                                    'code': country_code,
+                                    'order': len(countries_info) + 1,
+                                    'coordinates': waypoint
+                                })
                             break
                     
                     # Extract city
@@ -1288,26 +1356,22 @@ def calculate_route(request):
                             break
                     
                     if city_name:
-                        country_name = None
-                        for component in address_components:
-                            if 'country' in component.get('types', []):
-                                country_name = component['long_name']
-                                break
-                        
                         cities_passed.append({
                             'name': city_name,
                             'country': country_name or '',
-                            'coordinates': waypoint
+                            'country_code': country_code or '',
+                            'coordinates': waypoint,
+                            'order': idx + 1
                         })
             except Exception as e:
                 print(f"Reverse geocoding error for waypoint: {e}")
                 continue
         
-        # Remove duplicate cities
+        # Remove duplicate cities while maintaining order
         seen_cities = set()
         unique_cities = []
         for city in cities_passed:
-            key = (city.get('name', ''), city.get('country', ''))
+            key = (city.get('name', ''), city.get('country_code', ''))
             if key not in seen_cities:
                 seen_cities.add(key)
                 unique_cities.append(city)
@@ -1339,12 +1403,15 @@ def calculate_route(request):
             'estimated_time_seconds': duration_seconds,
             'estimated_time_hours': round(duration_hours, 2),
             'estimated_time_formatted': format_duration(duration_seconds),
-            'countries': sorted(list(countries_passed)),
+            'countries': sorted(list(countries_passed)),  # Simple list for backward compatibility
+            'countries_passed': countries_info,  # Detailed info with order and codes
             'cities': unique_cities,
             'waypoints': waypoints,
             'route_summary': route.get('summary', ''),
             'summary': {
                 'total_countries': len(countries_passed),
+                'countries_list': [c['name'] for c in countries_info],  # Countries in order of travel
+                'countries_codes': [c['code'] for c in countries_info],  # Country codes in order
                 'total_cities': len(unique_cities),
                 'total_waypoints': len(waypoints),
                 'average_speed_kmh': round(distance_km / duration_hours, 2) if duration_hours > 0 else 0

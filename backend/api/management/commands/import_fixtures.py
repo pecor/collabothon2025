@@ -170,6 +170,9 @@ class Command(BaseCommand):
                     special_requirements=get_field_value('special_requirements'),
                     loading_date=get_date_value('loading_date'),
                     unloading_date=get_date_value('unloading_date'),
+                    cost=get_float_value('cost'),
+                    revenue=get_float_value('revenue'),
+                    profit=get_float_value('profit'),
                 )
         self.stdout.write(self.style.SUCCESS(f'Imported {Order.objects.count()} orders'))
 
