@@ -40,6 +40,7 @@ export function Dashboard() {
         // Map active orders
         const recent = ordersData
           .map((order: Order) => ({
+            id: order.id,
             route: order.route_info || 'Unknown',
             status: order.status === 'in_transit' ? 'in-progress' as const : 
                    order.status === 'completed' ? 'completed' as const : 
@@ -48,7 +49,9 @@ export function Dashboard() {
             loadingDate: order.loading_date || order.planned_date,
             unloadingDate: order.unloading_date || order.planned_date,
             driver: order.user_name || 'Not assigned',
-            vehicle: order.vehicle_info || 'Not assigned'
+            vehicle: order.vehicle_info || 'Not assigned',
+            // Store full order for modal
+            fullOrder: order
           }))
         
         setRecentOrders(recent)
@@ -66,12 +69,6 @@ export function Dashboard() {
     { type: 'warning' as const, message: 'Vehicle WA 67890 requires inspection in 3 days', priority: 'medium' as const },
     { type: 'info' as const, message: 'New order waiting for assignment', priority: 'low' as const },
     { type: 'error' as const, message: 'Driver - expiring ADR certificate', priority: 'high' as const }
-  ]
-
-  const topRoutes = [
-    { route: 'Warszawa → Berlin', count: 23, avgProfit: 3150, avgScore: 91 },
-    { route: 'Poznań → Hamburg', count: 18, avgProfit: 2900, avgScore: 88 },
-    { route: 'Kraków → Wiedeń', count: 15, avgProfit: 3800, avgScore: 93 }
   ]
 
   if (loading) {
@@ -101,7 +98,6 @@ export function Dashboard() {
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
               <RecentOrders orders={recentOrders} />
-              <TopRoutes routes={topRoutes} />
             </div>
             <AlertsSidebar alerts={alerts} />
           </div>

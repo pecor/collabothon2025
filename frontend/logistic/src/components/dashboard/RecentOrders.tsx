@@ -1,6 +1,10 @@
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
+import { type Order as ApiOrder } from '@/lib/api'
+import { useState } from 'react'
+import { OrderModal } from './OrderModal'
 
 interface Order {
+  id: number
   route: string
   status: 'completed' | 'in-progress'
   profit: number
@@ -8,6 +12,7 @@ interface Order {
   unloadingDate: string
   driver: string
   vehicle: string
+  fullOrder: ApiOrder
 }
 
 interface RecentOrdersProps {
@@ -15,13 +20,24 @@ interface RecentOrdersProps {
 }
 
 export function RecentOrders({ orders }: RecentOrdersProps) {
+  const [selectedOrder, setSelectedOrder] = useState<ApiOrder | null>(null)
+
+  const handleOrderClick = (order: Order) => {
+    setSelectedOrder(order.fullOrder)
+  }
+
   return (
-    <Card className="bg-zinc-900 border-zinc-800">
-      <CardHeader>
-        <CardTitle className="text-white text-xl mb-4">Active Orders</CardTitle>
-        <div className="space-y-3">
-          {orders.map((order, idx) => (
-            <div key={idx} className="bg-zinc-800 border border-zinc-700 rounded-lg p-4">
+    <>
+      <Card className="bg-zinc-900 border-zinc-800">
+        <CardHeader>
+          <CardTitle className="text-white text-xl mb-4">Active Orders</CardTitle>
+          <div className="space-y-3">
+            {orders.map((order, idx) => (
+              <div 
+                key={idx} 
+                className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 cursor-pointer hover:border-red-500 hover:bg-zinc-700/50 transition-all"
+                onClick={() => handleOrderClick(order)}
+              >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
                   <span
@@ -60,6 +76,16 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
         </div>
       </CardHeader>
     </Card>
+    
+    {/* Order Modal */}
+    {selectedOrder && (
+      <OrderModal
+        order={selectedOrder}
+        isOpen={!!selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+      />
+    )}
+    </>
   )
 }
 

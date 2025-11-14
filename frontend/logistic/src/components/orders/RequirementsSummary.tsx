@@ -1,180 +1,70 @@
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Shield, Truck, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
-
-interface Requirement {
-  id: string
-  label: string
-  required: boolean
-  status: 'required' | 'optional' | 'not-needed'
-  description: string
-}
+import { Lightbulb, TrendingUp, Clock, DollarSign } from 'lucide-react'
 
 export function RequirementsSummary() {
-  const requirements: Requirement[] = [
+  const tips = [
     {
-      id: 'adr',
-      label: 'ADR Certificate',
-      required: false,
-      status: 'not-needed',
-      description: 'Not required - no hazardous materials'
+      icon: <Lightbulb className="h-5 w-5 text-yellow-500" />,
+      title: 'AI Email Parser',
+      description: 'Upload email screenshot and let AI extract all order details automatically'
     },
     {
-      id: 'license-ce',
-      label: 'Driving License C+E',
-      required: true,
-      status: 'required',
-      description: 'Required - truck with trailer'
+      icon: <TrendingUp className="h-5 w-5 text-green-500" />,
+      title: 'Smart Matching',
+      description: 'Our AI will automatically suggest the best driver and vehicle for your order'
     },
     {
-      id: 'vehicle-curtain',
-      label: 'Curtain-side Vehicle',
-      required: true,
-      status: 'required',
-      description: 'Standard curtain-side trailer'
+      icon: <Clock className="h-5 w-5 text-blue-500" />,
+      title: 'Route Optimization',
+      description: 'System calculates optimal routes considering traffic, holidays, and restrictions'
     },
     {
-      id: 'forklift',
-      label: 'Forklift On-site',
-      required: false,
-      status: 'optional',
-      description: 'Recommended for faster unloading'
-    },
-    {
-      id: 'holiday-block',
-      label: 'Holiday Restrictions',
-      required: false,
-      status: 'not-needed',
-      description: 'Route does not conflict with holidays'
+      icon: <DollarSign className="h-5 w-5 text-red-500" />,
+      title: 'Cost Analysis',
+      description: 'Automatic profit calculation based on distance, cargo type, and market rates'
     }
   ]
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'required':
-        return <AlertTriangle className="h-5 w-5 text-red-500" />
-      case 'optional':
-        return <CheckCircle2 className="h-5 w-5 text-yellow-500" />
-      case 'not-needed':
-        return <XCircle className="h-5 w-5 text-zinc-600" />
-      default:
-        return null
-    }
-  }
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'required':
-        return (
-          <span className="px-2 py-1 bg-red-900/30 border border-red-800 text-red-400 text-xs rounded-md font-medium">
-            Required
-          </span>
-        )
-      case 'optional':
-        return (
-          <span className="px-2 py-1 bg-yellow-900/30 border border-yellow-800 text-yellow-400 text-xs rounded-md font-medium">
-            Optional
-          </span>
-        )
-      case 'not-needed':
-        return (
-          <span className="px-2 py-1 bg-zinc-800 border border-zinc-700 text-zinc-500 text-xs rounded-md font-medium">
-            Nie wymagane
-          </span>
-        )
-    }
-  }
-
-  const requiredCount = requirements.filter(r => r.status === 'required').length
-  const optionalCount = requirements.filter(r => r.status === 'optional').length
 
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader>
-        <CardTitle className="text-white text-2xl flex items-center gap-2">
-          <Shield className="h-6 w-6 text-red-500" />
-          Order Requirements
+        <CardTitle className="text-white text-xl flex items-center gap-2">
+          <Lightbulb className="h-5 w-5 text-yellow-500" />
+          Quick Tips
         </CardTitle>
         <CardDescription className="text-zinc-400">
-          Automatically detected legal and technical requirements
+          How TruckAI helps you manage orders
         </CardDescription>
       </CardHeader>
 
-      <div className="px-6 pb-6 space-y-6">
-        {/* Summary Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 text-center">
-            <div className="text-3xl font-bold text-red-400">{requiredCount}</div>
-            <div className="text-zinc-500 text-sm mt-1">Wymagane</div>
-          </div>
-          <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 text-center">
-            <div className="text-3xl font-bold text-yellow-400">{optionalCount}</div>
-            <div className="text-zinc-500 text-sm mt-1">Opcjonalne</div>
-          </div>
-          <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 text-center">
-            <div className="text-3xl font-bold text-zinc-600">
-              {requirements.length - requiredCount - optionalCount}
-            </div>
-            <div className="text-zinc-500 text-sm mt-1">Niepotrzebne</div>
-          </div>
-        </div>
-
-        {/* Requirements List */}
-        <div className="space-y-3">
-          {requirements.map((req) => (
-            <div
-              key={req.id}
-              className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 hover:border-zinc-600 transition-colors"
-            >
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5">
-                  {getStatusIcon(req.status)}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-white font-semibold">{req.label}</h4>
-                    {getStatusBadge(req.status)}
-                  </div>
-                  <p className="text-zinc-400 text-sm">{req.description}</p>
-                </div>
+      <div className="px-6 pb-6 space-y-3">
+        {tips.map((tip, idx) => (
+          <div
+            key={idx}
+            className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 hover:border-zinc-600 transition-colors"
+          >
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5">
+                {tip.icon}
+              </div>
+              <div className="flex-1">
+                <h4 className="text-white font-semibold mb-1">{tip.title}</h4>
+                <p className="text-zinc-400 text-sm">{tip.description}</p>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
 
-        {/* Vehicle Type Recommendation */}
-        <div className="bg-gradient-to-r from-red-950 to-red-900 border border-red-800 rounded-lg p-6">
-          <div className="flex items-start gap-4">
-            <div className="bg-red-900 p-3 rounded-lg">
-              <Truck className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h4 className="text-white font-semibold text-lg mb-2">
-                Rekomendowany typ pojazdu
-              </h4>
-              <p className="text-red-100 mb-4">
-                Na podstawie analizy wymagań zlecenia, system rekomenduje:
-              </p>
-              <div className="bg-black/30 rounded-lg p-4 border border-red-800">
-                <div className="grid md:grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="text-red-300">Typ nadwozia:</span>
-                    <p className="text-white font-medium">Plandeka standardowa</p>
-                  </div>
-                  <div>
-                    <span className="text-red-300">Ładowność min.:</span>
-                    <p className="text-white font-medium">24 tony</p>
-                  </div>
-                  <div>
-                    <span className="text-red-300">Wymiary min.:</span>
-                    <p className="text-white font-medium">13.6m (standardowa naczepa)</p>
-                  </div>
-                  <div>
-                    <span className="text-red-300">Dodatkowe:</span>
-                    <p className="text-white font-medium">Pasy mocujące</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* CTA */}
+        <div className="bg-gradient-to-r from-red-950 to-red-900 border border-red-800 rounded-lg p-4 mt-4">
+          <h4 className="text-white font-semibold mb-2">Need help?</h4>
+          <p className="text-red-100 text-sm mb-3">
+            Switch to <span className="font-bold">Email AI mode</span> to let our system extract data from order emails or screenshots.
+          </p>
+          <div className="flex items-center gap-2 text-xs text-red-300">
+            <span>✓ Faster data entry</span>
+            <span>•</span>
+            <span>✓ Fewer errors</span>
           </div>
         </div>
       </div>
