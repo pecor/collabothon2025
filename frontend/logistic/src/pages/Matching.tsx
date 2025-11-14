@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Sparkles, Eye, EyeOff, User, Package } from 'lucide-react'
+import { Sparkles, Eye, EyeOff, User, Package, Truck } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Navbar } from '@/components/layout'
 
