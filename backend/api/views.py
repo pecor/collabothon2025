@@ -211,7 +211,7 @@ class CargoViewSet(viewsets.ModelViewSet):
                 'requires_crate': cargo.requires_crate,
                 'forklift_needed': cargo.forklift_needed,
                 'min_weight_capacity': cargo.weight,
-                'min_volume_capacity': cargo.volume
+                'min_volume_capacity': (cargo.length * cargo.width * cargo.height) / 1000000
             },
             'driver_requirements': {
                 'license_c_required': cargo.license_c_required,
@@ -270,11 +270,14 @@ class OrderViewSet(viewsets.ModelViewSet):
         route = order.route
         planned_date = order.planned_date
         
+        # Calculate volume from dimensions (length * width * height in cm³, convert to m³)
+        cargo_volume = (cargo.length * cargo.width * cargo.height) / 1000000
+        
         # Find compatible vehicles
         compatible_vehicles = Vehicle.objects.filter(
             status='available',
             capacity_weight__gte=cargo.weight,
-            capacity_volume__gte=cargo.volume
+            capacity_volume__gte=cargo_volume
         )
         
         # Filter by vehicle type requirements
@@ -343,7 +346,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 'reasons': [
                     f"Requires: {'refrigerated' if cargo.requires_cold else 'box' if cargo.requires_box else 'cargo'} type",
                     f"Min weight capacity: {cargo.weight} kg",
-                    f"Min volume capacity: {cargo.volume} m³",
+                    f"Min volume capacity: {(cargo.length * cargo.width * cargo.height) / 1000000} m³",
                     f"Forklift required: {cargo.forklift_needed}"
                 ]
             }, status=status.HTTP_404_NOT_FOUND)

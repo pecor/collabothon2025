@@ -1,30 +1,71 @@
+import { useState, useEffect } from 'react'
 import { StatsCards, RecentOrders, TopRoutes, AlertsSidebar } from '@/components/dashboard'
 import { Navbar } from '@/components/layout'
+import { getDashboardStats, getOrders, type Order } from '@/lib/api'
 
 export function Dashboard() {
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    activeOrders: 0,
+    completedToday: 0,
+    avgTime: '0h',
+    aiRecommendation: '0%',
+    realROI: '0%',
+    totalProfit: 0,
+    savedTime: '0h'
+  })
+  const [recentOrders, setRecentOrders] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const stats = {
-    totalOrders: 127,
-    activeOrders: 8,
-    completedToday: 5,
-    avgTime: '11.2h',
-    aiRecommendation: '94%',
-    realROI: '+18.5%',
-    totalProfit: 145200,
-    savedTime: '42h'
-  }
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [dashboardData, ordersData] = await Promise.all([
+          getDashboardStats(),
+          getOrders()
+        ])
 
-  const recentOrders = [
-    { id: '#1247', route: 'Warszawa → Berlin', status: 'completed' as const, profit: 3200, time: '12h 30m', score: 95 },
-    { id: '#1246', route: 'Poznań → Hamburg', status: 'in-progress' as const, profit: 2800, time: '8h 15m', score: 87 },
-    { id: '#1245', route: 'Kraków → Praga', status: 'completed' as const, profit: 4100, time: '14h 00m', score: 92 },
-    { id: '#1244', route: 'Gdańsk → Kopenhaga', status: 'completed' as const, profit: 5200, time: '18h 45m', score: 89 }
-  ]
+        // Map dashboard stats
+        setStats({
+          totalOrders: dashboardData.orders.total,
+          activeOrders: dashboardData.orders.active,
+          completedToday: dashboardData.orders.completed,
+          avgTime: '11.2h', // TODO: Calculate from actual data
+          aiRecommendation: '94%', // TODO: Calculate from AI metrics
+          realROI: '+18.5%', // TODO: Calculate from profit data
+          totalProfit: 145200, // TODO: Sum from completed orders
+          savedTime: '42h' // TODO: Calculate from AI efficiency
+        })
+
+        // Map recent orders (last 4)
+        const recent = ordersData
+          .slice(0, 4)
+          .map((order: Order) => ({
+            id: `#${order.id}`,
+            route: order.route_info || 'Unknown',
+            status: order.status === 'in_transit' ? 'in-progress' as const : 
+                   order.status === 'completed' ? 'completed' as const : 
+                   'in-progress' as const,
+            profit: 3200, // TODO: Calculate from order data
+            time: '12h 30m', // TODO: Calculate from route estimated_time
+            score: 90 // TODO: Get from AI scoring
+          }))
+        
+        setRecentOrders(recent)
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   const alerts = [
     { type: 'warning' as const, message: 'Pojazd WA 67890 wymaga przeglądu za 3 dni', priority: 'medium' as const },
-    { type: 'info' as const, message: 'Nowe zlecenie #1248 czeka na przypisanie', priority: 'low' as const },
-    { type: 'error' as const, message: 'Kierowca P. Wiśniewski - upływający certyfikat ADR', priority: 'high' as const }
+    { type: 'info' as const, message: 'Nowe zlecenie czeka na przypisanie', priority: 'low' as const },
+    { type: 'error' as const, message: 'Kierowca - upływający certyfikat ADR', priority: 'high' as const }
   ]
 
   const topRoutes = [
@@ -32,6 +73,19 @@ export function Dashboard() {
     { route: 'Poznań → Hamburg', count: 18, avgProfit: 2900, avgScore: 88 },
     { route: 'Kraków → Wiedeń', count: 15, avgProfit: 3800, avgScore: 93 }
   ]
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Navbar />
+        <main className="pt-24 pb-12 px-8">
+          <div className="max-w-7xl mx-auto text-center">
+            <p className="text-zinc-400">Loading dashboard...</p>
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">

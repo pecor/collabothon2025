@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Truck, Filter, Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -6,6 +6,7 @@ import { VehicleCard } from '@/components/fleet/VehicleCard'
 import { DriverCard } from '@/components/fleet/DriverCard'
 import { FleetStats } from '@/components/fleet/FleetStats'
 import { Navbar } from '@/components/layout'
+import { getVehicles, getUsers, type Vehicle, type User } from '@/lib/api'
 
 type ViewMode = 'all' | 'vehicles' | 'drivers'
 
@@ -13,89 +14,75 @@ export function Fleet() {
   const navigate = useNavigate()
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [vehicles, setVehicles] = useState<any[]>([])
+  const [drivers, setDrivers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Mock data - TODO: Replace with API
-  const vehicles = [
-    {
-      id: '1',
-      name: 'Mercedes Actros',
-      type: 'Plandeka',
-      capacity: 24000,
-      available: true,
-      features: ['Pasy mocujące', 'GPS', 'Klimatyzacja'],
-      licensePlate: 'WA 12345',
-      matchScore: 95
-    },
-    {
-      id: '2',
-      name: 'Volvo FH16',
-      type: 'Chłodnia',
-      capacity: 22000,
-      available: true,
-      features: ['Chłodnia -25°C', 'Multi-temp', 'Wózek widłowy'],
-      licensePlate: 'WA 67890',
-      matchScore: 78
-    },
-    {
-      id: '3',
-      name: 'Scania R450',
-      type: 'Plandeka',
-      capacity: 24000,
-      available: false,
-      features: ['Pasy mocujące', 'GPS'],
-      licensePlate: 'WA 11111',
-      matchScore: 87
-    },
-    {
-      id: '4',
-      name: 'MAN TGX',
-      type: 'Box',
-      capacity: 20000,
-      available: true,
-      features: ['Winda załadowcza', 'GPS'],
-      licensePlate: 'WA 22222',
-      matchScore: 65
-    }
-  ]
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [vehiclesData, driversData] = await Promise.all([
+          getVehicles(),
+          getUsers()
+        ])
 
-  const drivers = [
-    {
-      id: '1',
-      name: 'Jan Kowalski',
-      licenses: ['C+E', 'ADR', 'Wózek widłowy'],
-      available: true,
-      experience: 12,
-      rating: 4.8,
-      matchScore: 92
-    },
-    {
-      id: '2',
-      name: 'Anna Nowak',
-      licenses: ['C+E', 'Wózek widłowy'],
-      available: true,
-      experience: 8,
-      rating: 4.9,
-      matchScore: 85
-    },
-    {
-      id: '3',
-      name: 'Piotr Wiśniewski',
-      licenses: ['C', 'ADR'],
-      available: false,
-      experience: 15,
-      rating: 4.7,
-      matchScore: 70
-    },
-    {
-      id: '4',
-      name: 'Maria Lewandowska',
-      licenses: ['C+E', 'ADR', 'Wózek widłowy'],
-      available: true,
-      experience: 10,
-      rating: 5.0,
-      matchScore: 98
+        // Map vehicles to component format
+        const mappedVehicles = vehiclesData.map((v: Vehicle) => ({
+          id: v.id.toString(),
+          name: v.registration_no,
+          type: v.type === 'refrigerated' ? 'Chłodnia' : v.type === 'box' ? 'Box' : 'Plandeka',
+          capacity: v.capacity_weight,
+          available: v.status === 'available',
+          features: [
+            v.has_forklift && 'Wózek widłowy',
+            'GPS',
+            v.type === 'refrigerated' && 'Chłodnia'
+          ].filter(Boolean) as string[],
+          licensePlate: v.registration_no,
+          matchScore: 85 // TODO: Calculate from AI
+        }))
+
+        // Map drivers to component format
+        const mappedDrivers = driversData.map((d: User) => ({
+          id: d.id.toString(),
+          name: d.name,
+          licenses: [
+            d.license_c && 'C',
+            d.license_ce && 'C+E',
+            d.license_adr && 'ADR',
+            d.forklift_certified && 'Wózek widłowy'
+          ].filter(Boolean) as string[],
+          available: d.is_active,
+          experience: 10, // TODO: Add to backend model
+          rating: 4.5, // TODO: Add to backend model
+          matchScore: 85 // TODO: Calculate from AI
+        }))
+
+        setVehicles(mappedVehicles)
+        setDrivers(mappedDrivers)
+      } catch (error) {
+        console.error('Failed to fetch fleet data:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
+
+    fetchData()
+  }, [])
+
+  // Mock data kept commented for reference
+  // const vehicles = [
+  //   {
+  //     id: '1',
+  //     name: 'Mercedes Actros',
+  //     type: 'Plandeka',
+  //     capacity: 24000,
+  //     available: true,
+  //     features: ['Pasy mocujące', 'GPS', 'Klimatyzacja'],
+  //     licensePlate: 'WA 12345',
+  //     matchScore: 95
+  //   },
+  // ]
 
   const stats = {
     totalVehicles: vehicles.length,
