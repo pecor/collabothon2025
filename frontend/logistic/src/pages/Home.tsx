@@ -19,13 +19,21 @@ export function Home() {
           <div className="flex items-center gap-3">
             <Button 
               variant="outline" 
-              className="border-zinc-700 text-white hover:bg-zinc-900"
               onClick={() => navigate('/fleet')}
             >
-              Zobacz flotę
+              Flota
             </Button>
-            <Button variant="outline" className="border-zinc-700 text-white hover:bg-zinc-900">
-              Zaloguj się
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/dashboard')}
+            >
+              Dashboard
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/docs')}
+            >
+              API Docs
             </Button>
           </div>
         </div>
