@@ -1,0 +1,18 @@
+date,country,description,license_c_allowed,license_ce_allowed,license_adr_allowed
+2025-01-01,DE,New Year's Day,0,0,1
+2025-01-01,PL,New Year's Day,0,0,1
+2025-04-18,DE,Good Friday,0,0,1
+2025-04-20,PL,Easter Sunday,0,0,1
+2025-04-21,PL,Easter Monday,0,0,1
+2025-05-01,DE,Labour Day,0,0,1
+2025-05-01,PL,Labour Day,0,0,1
+2025-05-03,PL,Constitution Day,0,0,1
+2025-06-19,PL,Corpus Christi,0,0,1
+2025-08-15,PL,Assumption Day,0,0,1
+2025-10-03,DE,German Unity Day,0,0,1
+2025-11-01,PL,All Saints' Day,0,0,1
+2025-11-11,PL,Independence Day,0,0,1
+2025-12-25,DE,Christmas Day,0,0,1
+2025-12-25,PL,Christmas Day,0,0,1
+2025-12-26,DE,Boxing Day,0,0,1
+2025-12-26,PL,Second Day of Christmas,0,0,1

@@ -1,0 +1,11 @@
+registration_no,type,capacity_weight,capacity_volume,has_forklift,status
+WX12345,refrigerated,12000,40,true,available
+WX23456,box,8000,30,false,available
+WX34567,cargo,15000,50,true,available
+WX45678,refrigerated,10000,35,false,in_transit
+WX56789,box,7000,25,true,available
+WX67890,cargo,18000,60,true,available
+WX78901,refrigerated,11000,38,false,available
+WX89012,box,9000,32,false,maintenance
+WX90123,cargo,16000,55,true,available
+WX01234,refrigerated,13000,42,true,available

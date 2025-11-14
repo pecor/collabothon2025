@@ -1,0 +1,11 @@
+origin,destination,distance_km,estimated_time,holiday_blocked,status
+Warsaw,Berlin,570,6:30:00,false,planned
+Krakow,Vienna,390,4:45:00,false,planned
+Gdansk,Hamburg,450,5:15:00,true,planned
+Poznan,Amsterdam,880,10:00:00,false,in_progress
+Wroclaw,Prague,280,3:30:00,false,completed
+Lodz,Munich,780,9:00:00,false,planned
+Katowice,Budapest,450,5:30:00,true,planned
+Szczecin,Copenhagen,420,5:00:00,false,planned
+Lublin,Bratislava,520,6:15:00,false,planned
+Bydgoszcz,Brussels,1100,12:30:00,false,planned

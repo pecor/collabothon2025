@@ -33,5 +33,8 @@ else:
     print('Superuser already exists')
 END
 
+echo "Importing fixtures if database is empty..."
+python manage.py import_fixtures
+
 echo "Starting server..."
 exec "$@"
