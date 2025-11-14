@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Truck, Thermometer, Package, CheckCircle2, XCircle } from 'lucide-react'
+import { Truck, CheckCircle2, XCircle } from 'lucide-react'
 
 interface VehicleCardProps {
   vehicle: {

@@ -1,4 +1,4 @@
-import { X, MapPin, Truck, User, DollarSign, Package, Calendar, Navigation } from 'lucide-react'
+import { X, MapPin, User, DollarSign, Package, Calendar, Navigation } from 'lucide-react'
 import { type Order as ApiOrder } from '@/lib/api'
 
 interface OrderModalProps {
