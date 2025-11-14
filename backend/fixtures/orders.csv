@@ -1,16 +1,16 @@
-user_id,cargo_id,route_id,planned_date,status
-,1,1,2025-11-20,new
-,2,2,2025-11-21,new
-3,3,3,2025-11-22,assigned
-,4,4,2025-11-23,new
-5,5,5,2025-11-24,in_transit
-,6,6,2025-11-25,new
-,7,7,2025-11-26,new
-8,8,8,2025-11-27,assigned
-,9,9,2025-11-28,new
-,10,10,2025-11-29,new
-,3,2,2025-12-01,new
-,5,4,2025-12-02,new
-,7,6,2025-12-03,new
-,9,8,2025-12-04,new
-,1,10,2025-12-05,new
+user_id,cargo_id,route_id,planned_date,status,cargo_type,weight,temperature,special_requirements,loading_date,unloading_date
+,1,1,2025-11-20,new,Pallets,1500,Ambient,,2025-11-20,2025-11-22
+,2,2,2025-11-21,new,Boxes,800,Ambient,Forklift,2025-11-21,2025-11-23
+3,3,3,2025-11-22,assigned,Chemicals,2000,-18 to -20,ADR,2025-11-22,2025-11-24
+,4,4,2025-11-23,new,Electronics,1200,Ambient,,2025-11-23,2025-11-25
+5,5,5,2025-11-24,in_transit,Food Products,2500,2 to 4,Refrigerated,2025-11-24,2025-11-26
+,6,6,2025-11-25,new,Machinery,3500,Ambient,Forklift,2025-11-25,2025-11-27
+,7,7,2025-11-26,new,Textiles,900,Ambient,,2025-11-26,2025-11-28
+8,8,8,2025-11-27,assigned,Pharmaceuticals,1800,2 to 8,Refrigerated ADR,2025-11-27,2025-11-29
+,9,9,2025-11-28,new,Furniture,2200,Ambient,Forklift Tarpaulin,2025-11-28,2025-11-30
+,10,10,2025-11-29,new,Automotive Parts,1500,Ambient,,2025-11-29,2025-12-01
+,3,2,2025-12-01,new,Chemicals,2000,-18 to -20,ADR,2025-12-01,2025-12-03
+,5,4,2025-12-02,new,Food Products,2500,2 to 4,Refrigerated,2025-12-02,2025-12-04
+,7,6,2025-12-03,new,Textiles,900,Ambient,,2025-12-03,2025-12-05
+,9,8,2025-12-04,new,Furniture,2200,Ambient,Forklift Tarpaulin,2025-12-04,2025-12-06
+,1,10,2025-12-05,new,Pallets,1500,Ambient,,2025-12-05,2025-12-07

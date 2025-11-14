@@ -51,10 +51,14 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    """Simplified serializer for creating orders"""
+    """Serializer for creating orders with all form fields"""
     class Meta:
         model = Order
-        fields = ['user', 'cargo', 'route', 'planned_date', 'vehicle', 'driver', 'status']
+        fields = [
+            'user', 'cargo', 'route', 'planned_date', 'vehicle', 'driver', 'status',
+            'cargo_type', 'weight', 'temperature', 'special_requirements',
+            'loading_date', 'unloading_date'
+        ]
 
 
 class TrackerSerializer(serializers.ModelSerializer):

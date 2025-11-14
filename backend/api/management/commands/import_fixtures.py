@@ -142,12 +142,34 @@ class Command(BaseCommand):
                 # Handle empty user_id (for new orders without assigned client)
                 user_id = row['user_id'].strip() if row['user_id'] and row['user_id'].strip() else None
                 
+                # Handle optional new fields
+                def get_field_value(field_name):
+                    """Get field value or None if empty"""
+                    value = row.get(field_name, '').strip()
+                    return value if value else None
+                
+                def get_float_value(field_name):
+                    """Get float value or None if empty"""
+                    value = get_field_value(field_name)
+                    return float(value) if value else None
+                
+                def get_date_value(field_name):
+                    """Get date value or None if empty"""
+                    value = get_field_value(field_name)
+                    return value if value else None
+                
                 Order.objects.create(
                     user_id=int(user_id) if user_id else None,
                     cargo_id=int(row['cargo_id']),
                     route_id=int(row['route_id']),
                     planned_date=row['planned_date'],
                     status=row['status'],
+                    cargo_type=get_field_value('cargo_type'),
+                    weight=get_float_value('weight'),
+                    temperature=get_field_value('temperature'),
+                    special_requirements=get_field_value('special_requirements'),
+                    loading_date=get_date_value('loading_date'),
+                    unloading_date=get_date_value('unloading_date'),
                 )
         self.stdout.write(self.style.SUCCESS(f'Imported {Order.objects.count()} orders'))
 

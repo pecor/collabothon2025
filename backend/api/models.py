@@ -121,6 +121,14 @@ class Order(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True, verbose_name="Creation Date")
     planned_date = models.DateField(verbose_name="Planned Departure Date")
     actual_end_date = models.DateTimeField(null=True, blank=True, verbose_name="Actual End Date")
+    
+    # Additional fields from form
+    cargo_type = models.CharField(max_length=255, null=True, blank=True, verbose_name="Cargo Type", help_text="e.g. Pallets, Boxes, Chemicals")
+    weight = models.FloatField(null=True, blank=True, verbose_name="Weight (kg)", help_text="Order weight override (if different from cargo weight)")
+    temperature = models.CharField(max_length=100, null=True, blank=True, verbose_name="Temperature (°C)", help_text="e.g. -18 to -20 or 'Ambient'")
+    special_requirements = models.TextField(null=True, blank=True, verbose_name="Special Requirements", help_text="e.g. ADR, Forklift, Tarpaulin")
+    loading_date = models.DateField(null=True, blank=True, verbose_name="Loading Date")
+    unloading_date = models.DateField(null=True, blank=True, verbose_name="Unloading Date")
 
     class Meta:
         db_table = 'orders'
