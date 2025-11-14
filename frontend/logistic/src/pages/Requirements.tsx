@@ -1,27 +1,24 @@
-import { useNavigate } from 'react-router-dom'
 import { LegalRequirementsList, RouteValidation, HolidayCalendar } from '@/components/requirements'
 import { Navbar } from '@/components/layout'
 
 export function Requirements() {
-  const navigate = useNavigate()
-
   const legalRequirements = [
-    { id: 1, category: 'Kierowca', requirement: 'Prawo jazdy C+E', status: 'required', met: true },
-    { id: 2, category: 'Kierowca', requirement: 'Certyfikat ADR', status: 'required', met: true },
-    { id: 3, category: 'Kierowca', requirement: 'Karta kierowcy', status: 'required', met: true },
-    { id: 4, category: 'Pojazd', requirement: 'Przegląd technicznyważny', status: 'required', met: true },
-    { id: 5, category: 'Pojazd', requirement: 'Ubezpieczenie OC/AC', status: 'required', met: true },
-    { id: 6, category: 'Pojazd', requirement: 'Certyfikat ADR pojazdu', status: 'required', met: false },
-    { id: 7, category: 'Szkolenie', requirement: 'Szkolenie BHP kierowcy', status: 'optional', met: true },
-    { id: 8, category: 'Szkolenie', requirement: 'Obsługa wózka widłowego', status: 'optional', met: true }
+    { id: 1, category: 'Kierowca', requirement: 'Prawo jazdy C+E', status: 'required' as const, met: true },
+    { id: 2, category: 'Kierowca', requirement: 'Certyfikat ADR', status: 'required' as const, met: true },
+    { id: 3, category: 'Kierowca', requirement: 'Karta kierowcy', status: 'required' as const, met: true },
+    { id: 4, category: 'Pojazd', requirement: 'Przegląd technicznyważny', status: 'required' as const, met: true },
+    { id: 5, category: 'Pojazd', requirement: 'Ubezpieczenie OC/AC', status: 'required' as const, met: true },
+    { id: 6, category: 'Pojazd', requirement: 'Certyfikat ADR pojazdu', status: 'required' as const, met: false },
+    { id: 7, category: 'Szkolenie', requirement: 'Szkolenie BHP kierowcy', status: 'optional' as const, met: true },
+    { id: 8, category: 'Szkolenie', requirement: 'Obsługa wózka widłowego', status: 'optional' as const, met: true }
   ]
 
   const holidays = [
-    { date: '2025-12-24', country: 'PL', name: 'Wigilia', restriction: 'Zakaz ruchu ciężarówek >12t po 12:00', severity: 'high' },
-    { date: '2025-12-25', country: 'PL/DE', name: 'Boże Narodzenie', restriction: 'Całkowity zakaz ruchu', severity: 'critical' },
-    { date: '2025-12-26', country: 'PL/DE', name: 'Drugi dzień świąt', restriction: 'Całkowity zakaz ruchu', severity: 'critical' },
-    { date: '2025-12-31', country: 'PL', name: 'Sylwester', restriction: 'Zakaz ruchu po 18:00', severity: 'medium' },
-    { date: '2026-01-01', country: 'PL/DE', name: 'Nowy Rok', restriction: 'Całkowity zakaz ruchu', severity: 'critical' }
+    { date: '2025-12-24', country: 'PL', name: 'Wigilia', restriction: 'Zakaz ruchu ciężarówek >12t po 12:00', severity: 'high' as const },
+    { date: '2025-12-25', country: 'PL/DE', name: 'Boże Narodzenie', restriction: 'Całkowity zakaz ruchu', severity: 'critical' as const },
+    { date: '2025-12-26', country: 'PL/DE', name: 'Drugi dzień świąt', restriction: 'Całkowity zakaz ruchu', severity: 'critical' as const },
+    { date: '2025-12-31', country: 'PL', name: 'Sylwester', restriction: 'Zakaz ruchu po 18:00', severity: 'medium' as const },
+    { date: '2026-01-01', country: 'PL/DE', name: 'Nowy Rok', restriction: 'Całkowity zakaz ruchu', severity: 'critical' as const }
   ]
 
   const routeCheck = {

@@ -1,10 +1,7 @@
-import { useNavigate } from 'react-router-dom'
 import { MapPlaceholder, RouteDetails, RouteRestrictions, VehicleStatus } from '@/components/route'
 import { Navbar } from '@/components/layout'
 
 export function Route() {
-  const navigate = useNavigate()
-
   const routeDetails = {
     from: 'Warszawa, ul. Transportowa 1',
     to: 'Berlin, Hauptstraße 45',
@@ -14,16 +11,16 @@ export function Route() {
   }
 
   const waypoints = [
-    { name: 'Warszawa (start)', time: '08:00', status: 'completed', alert: null },
-    { name: 'Poznań (postój)', time: '11:15', status: 'completed', alert: null },
-    { name: 'Granica PL/DE', time: '13:30', status: 'current', alert: 'Kontrola celna - opóźnienie 15min' },
-    { name: 'Frankfurt (Oder)', time: '14:00', status: 'pending', alert: null },
-    { name: 'Berlin (cel)', time: '15:30', status: 'pending', alert: null }
+    { name: 'Warszawa (start)', time: '08:00', status: 'completed' as const, alert: null },
+    { name: 'Poznań (postój)', time: '11:15', status: 'completed' as const, alert: null },
+    { name: 'Granica PL/DE', time: '13:30', status: 'current' as const, alert: 'Kontrola celna - opóźnienie 15min' },
+    { name: 'Frankfurt (Oder)', time: '14:00', status: 'pending' as const, alert: null },
+    { name: 'Berlin (cel)', time: '15:30', status: 'pending' as const, alert: null }
   ]
 
   const restrictions = [
-    { location: 'Niemcy - Autostrada A2', rule: 'Zakaz wyprzedzania ciężarówek 06:00-20:00', severity: 'info' },
-    { location: 'Niemcy - ogólnokrajowy', rule: 'Brak zakazów świątecznych w tym dniu', severity: 'ok' }
+    { location: 'Niemcy - Autostrada A2', rule: 'Zakaz wyprzedzania ciężarówek 06:00-20:00', severity: 'info' as const },
+    { location: 'Niemcy - ogólnokrajowy', rule: 'Brak zakazów świątecznych w tym dniu', severity: 'ok' as const }
   ]
 
   const vehicle = {
@@ -46,7 +43,13 @@ export function Route() {
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
               <MapPlaceholder from={routeDetails.from} to={routeDetails.to} />
-              <RouteDetails routeDetails={routeDetails} waypoints={waypoints} />
+              <RouteDetails 
+                from={routeDetails.from}
+                to={routeDetails.to}
+                distance={routeDetails.distance}
+                duration={routeDetails.duration}
+                waypoints={waypoints} 
+              />
               <RouteRestrictions restrictions={restrictions} />
             </div>
             <VehicleStatus vehicle={vehicle} />

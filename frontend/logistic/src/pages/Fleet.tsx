@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Truck, Search } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { VehicleCard } from '@/components/fleet/VehicleCard'
 import { DriverCard } from '@/components/fleet/DriverCard'
 import { FleetStats } from '@/components/fleet/FleetStats'
@@ -11,7 +10,6 @@ import { getVehicles, getUsers, getVehicleTypeOptions, getVehicleStatusOptions, 
 type ViewMode = 'all' | 'vehicles' | 'drivers'
 
 export function Fleet() {
-  const navigate = useNavigate()
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [vehicles, setVehicles] = useState<any[]>([])
@@ -113,6 +111,19 @@ export function Fleet() {
   const filteredDrivers = drivers.filter(d =>
     d.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Navbar />
+        <main className="pt-24 pb-12 px-8">
+          <div className="max-w-7xl mx-auto">
+            <p className="text-zinc-400">Loading fleet data...</p>
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">

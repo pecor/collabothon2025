@@ -1,44 +1,41 @@
 import { BookOpen } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { APIEndpoints, Architecture, AIModels, QuickStart } from '@/components/docs'
 import { Navbar } from '@/components/layout'
 
 export function Docs() {
-  const navigate = useNavigate()
-
   const endpoints = [
     {
-      method: 'POST',
+      method: 'POST' as const,
       path: '/api/orders',
       description: 'Dodaj nowe zlecenie',
       body: '{ "cargo_type": "pallets", "weight": 24000, "route": {...} }'
     },
     {
-      method: 'GET',
+      method: 'GET' as const,
       path: '/api/orders/{id}/match',
       description: 'Pobierz rekomendacje AI dla zlecenia',
       body: null
     },
     {
-      method: 'GET',
+      method: 'GET' as const,
       path: '/api/vehicles',
       description: 'Lista dostępnych pojazdów',
       body: null
     },
     {
-      method: 'GET',
+      method: 'GET' as const,
       path: '/api/drivers',
       description: 'Lista dostępnych kierowców',
       body: null
     },
     {
-      method: 'POST',
+      method: 'POST' as const,
       path: '/api/tracking/update',
       description: 'Aktualizuj pozycję pojazdu',
       body: '{ "vehicle_id": "123", "lat": 52.23, "lng": 21.01 }'
     },
     {
-      method: 'GET',
+      method: 'GET' as const,
       path: '/api/holidays',
       description: 'Kalendarz zakazów świątecznych',
       body: null
