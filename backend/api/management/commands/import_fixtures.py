@@ -139,8 +139,11 @@ class Command(BaseCommand):
         with open(file_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
+                # Handle empty user_id (for new orders without assigned client)
+                user_id = row['user_id'].strip() if row['user_id'] and row['user_id'].strip() else None
+                
                 Order.objects.create(
-                    user_id=int(row['user_id']),
+                    user_id=int(user_id) if user_id else None,
                     cargo_id=int(row['cargo_id']),
                     route_id=int(row['route_id']),
                     planned_date=row['planned_date'],

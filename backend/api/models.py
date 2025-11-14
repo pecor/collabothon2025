@@ -112,7 +112,7 @@ class Order(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', verbose_name="Client")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', null=True, blank=True, verbose_name="Client")
     cargo = models.ForeignKey(Cargo, on_delete=models.CASCADE, related_name='orders', verbose_name="Cargo")
     route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name='orders', verbose_name="Route")
     vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders', verbose_name="Assigned Vehicle")
