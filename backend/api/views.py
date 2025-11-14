@@ -345,23 +345,30 @@ class OrderViewSet(viewsets.ModelViewSet):
         route = order.route
         planned_date = order.planned_date
         
+        # Use order weight if available, otherwise use cargo weight
+        order_weight = order.weight if order.weight is not None else cargo.weight
+        
         # Calculate volume from dimensions (length * width * height in cm³, convert to m³)
         cargo_volume = (cargo.length * cargo.width * cargo.height) / 1000000
         
         # Find compatible vehicles
         compatible_vehicles = Vehicle.objects.filter(
             status='available',
-            capacity_weight__gte=cargo.weight,
+            capacity_weight__gte=order_weight,
             capacity_volume__gte=cargo_volume
         )
         
         # Filter by vehicle type requirements
-        if cargo.requires_cold:
+        # Check temperature requirement from order or cargo
+        requires_cold = (order.temperature is not None and 'ambient' not in order.temperature.lower()) if order.temperature else cargo.requires_cold
+        if requires_cold:
             compatible_vehicles = compatible_vehicles.filter(type='refrigerated')
         elif cargo.requires_box:
             compatible_vehicles = compatible_vehicles.filter(type='box')
         
-        if cargo.forklift_needed:
+        # Check special requirements for forklift
+        needs_forklift = (order.special_requirements and 'forklift' in order.special_requirements.lower()) or cargo.forklift_needed
+        if needs_forklift:
             compatible_vehicles = compatible_vehicles.filter(has_forklift=True)
         
         # Exclude vehicles already assigned on this date
@@ -374,13 +381,17 @@ class OrderViewSet(viewsets.ModelViewSet):
         # Find compatible drivers
         compatible_drivers = User.objects.filter(is_active=True)
         
+        # Check special requirements for licenses
+        needs_adr = (order.special_requirements and 'adr' in order.special_requirements.lower()) or cargo.license_adr_required
+        needs_forklift_driver = needs_forklift
+        
         if cargo.license_c_required:
             compatible_drivers = compatible_drivers.filter(license_c=True)
         if cargo.license_ce_required:
             compatible_drivers = compatible_drivers.filter(license_ce=True)
-        if cargo.license_adr_required:
+        if needs_adr:
             compatible_drivers = compatible_drivers.filter(license_adr=True)
-        if cargo.forklift_needed:
+        if needs_forklift_driver:
             compatible_drivers = compatible_drivers.filter(forklift_certified=True)
         
         # Exclude drivers already assigned on this date
@@ -419,10 +430,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response({
                 'error': 'No compatible vehicles available',
                 'reasons': [
-                    f"Requires: {'refrigerated' if cargo.requires_cold else 'box' if cargo.requires_box else 'cargo'} type",
-                    f"Min weight capacity: {cargo.weight} kg",
+                    f"Requires: {'refrigerated' if requires_cold else 'box' if cargo.requires_box else 'cargo'} type",
+                    f"Min weight capacity: {order_weight} kg",
                     f"Min volume capacity: {(cargo.length * cargo.width * cargo.height) / 1000000} m³",
-                    f"Forklift required: {cargo.forklift_needed}"
+                    f"Forklift required: {needs_forklift}"
                 ]
             }, status=status.HTTP_404_NOT_FOUND)
         
@@ -432,8 +443,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                 'reasons': [
                     f"License C required: {cargo.license_c_required}",
                     f"License C+E required: {cargo.license_ce_required}",
-                    f"ADR required: {cargo.license_adr_required}",
-                    f"Forklift certified: {cargo.forklift_needed}"
+                    f"ADR required: {needs_adr}",
+                    f"Forklift certified: {needs_forklift_driver}"
                 ]
             }, status=status.HTTP_404_NOT_FOUND)
         
