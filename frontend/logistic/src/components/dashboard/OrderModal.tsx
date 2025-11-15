@@ -1,5 +1,6 @@
-import { X, MapPin, User, DollarSign, Package, Calendar, Navigation } from 'lucide-react'
+import { X, MapPin, User, DollarSign, Package, Calendar, Truck } from 'lucide-react'
 import { type Order as ApiOrder } from '@/lib/api'
+import { RouteMap } from './RouteMap'
 
 interface OrderModalProps {
   order: ApiOrder
@@ -10,8 +11,38 @@ interface OrderModalProps {
 export function OrderModal({ order, isOpen, onClose }: OrderModalProps) {
   if (!isOpen) return null
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'new': return 'bg-yellow-900/30 border-yellow-800 text-yellow-400'
+      case 'assigned': return 'bg-blue-900/30 border-blue-800 text-blue-400'
+      case 'in_transit': return 'bg-green-900/30 border-green-800 text-green-400'
+      case 'completed': return 'bg-zinc-800 border-zinc-600 text-zinc-400'
+      default: return 'bg-zinc-800 border-zinc-700 text-zinc-400'
+    }
+  }
+
   return (
     <>
+      {/* Custom scrollbar styles */}
+      <style>{`
+        .custom-modal-scrollbar::-webkit-scrollbar {
+          width: 12px;
+          background: #18181b;
+        }
+        .custom-modal-scrollbar::-webkit-scrollbar-thumb {
+          background: #3f3f46;
+          border-radius: 8px;
+          border: 3px solid #18181b;
+        }
+        .custom-modal-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #dc2626;
+        }
+        .custom-modal-scrollbar::-webkit-scrollbar-track {
+          background: #09090b;
+          border-radius: 8px;
+        }
+      `}</style>
+
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 animate-in fade-in duration-200"
@@ -27,8 +58,17 @@ export function OrderModal({ order, isOpen, onClose }: OrderModalProps) {
           {/* Header */}
           <div className="bg-gradient-to-r from-red-950 to-red-900 border-b border-red-800 p-6 flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-1">Order #{order.id}</h2>
-              <p className="text-red-200">
+              <div className="flex items-center gap-3 mb-2">
+                <Truck className="h-6 w-6 text-red-300" />
+                <h2 className="text-2xl font-bold text-white">
+                  {order.cargo_name || `Shipment #${order.id}`}
+                </h2>
+                <span className={`px-3 py-1 rounded-full text-xs border ${getStatusColor(order.status)}`}>
+                  {order.status.replace('_', ' ').toUpperCase()}
+                </span>
+              </div>
+              <p className="text-red-200 flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
                 {order.route_info || 'Route information'}
               </p>
             </div>
@@ -41,26 +81,15 @@ export function OrderModal({ order, isOpen, onClose }: OrderModalProps) {
           </div>
 
           {/* Content */}
-          <div className="overflow-y-auto max-h-[calc(90vh-100px)]">
+          <div className="overflow-y-auto max-h-[calc(90vh-100px)] custom-modal-scrollbar">
             <div className="p-6 space-y-6">
-              {/* Map Section - TODO */}
-              <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-8 text-center">
-                <Navigation className="h-16 w-16 text-zinc-600 mx-auto mb-4" />
-                <h3 className="text-white text-xl font-semibold mb-2">Interactive Route Map</h3>
-                <p className="text-zinc-400 mb-4">
-                  TODO: Implement interactive map using <span className="text-red-400 font-mono">api/routes/calculate/</span> endpoint
-                </p>
-                <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-4 text-left text-sm">
-                  <p className="text-zinc-300 mb-2 font-semibold">Map will show:</p>
-                  <ul className="text-zinc-400 space-y-1 list-disc list-inside">
-                    <li>Origin: {order.route_info?.split(' → ')[0] || 'Unknown'}</li>
-                    <li>Destination: {order.route_info?.split(' → ')[1] || 'Unknown'}</li>
-                    <li>Current tracker position (if in transit)</li>
-                    <li>Route optimization visualization</li>
-                    <li>Distance and estimated time</li>
-                  </ul>
-                </div>
-              </div>
+              {/* Interactive Route Map */}
+              <RouteMap 
+                origin={order.route_info?.split(' → ')[0] || 'Warsaw'}
+                destination={order.route_info?.split(' → ')[1] || 'Berlin'}
+                currentPosition={null}
+                status={order.status}
+              />
 
               {/* Order Details Grid */}
               <div className="grid md:grid-cols-2 gap-6">
