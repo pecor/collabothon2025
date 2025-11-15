@@ -44,8 +44,8 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'config.middleware.DisableCSRFForAPI',  # Disable CSRF for API endpoints
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'config.middleware.DisableCSRFForAPI',  # Disable CSRF for API endpoints
+    # 'django.middleware.csrf.CsrfViewMiddleware',  # CSRF completely disabled
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -125,9 +125,9 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-# Exempt API endpoints from CSRF (using CORS instead)
-CSRF_COOKIE_HTTPONLY = False
-CSRF_USE_SESSIONS = False
+# CSRF completely disabled - no CSRF checks
+# CSRF_COOKIE_HTTPONLY = False
+# CSRF_USE_SESSIONS = False
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'TruckAI API',
@@ -141,18 +141,15 @@ SPECTACULAR_SETTINGS = {
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-# CSRF settings
-# Middleware DisableCSRFForAPI already exempts /api/* endpoints
-# Trusted origins for CSRF protection
-CSRF_TRUSTED_ORIGINS = [
-    'https://backend-truckai-project.apps.cluster-bt99s.bt99s.sandbox1766.opentlc.com',
-    'http://localhost:8000',
-    'http://127.0.0.1:8000',
-]
-
-# CSRF cookie settings
-CSRF_COOKIE_SECURE = not DEBUG  # True in production, False in development
-CSRF_COOKIE_HTTPONLY = False
+# CSRF completely disabled for production deployment
+# WARNING: This disables CSRF protection - use only if necessary
+# CSRF_TRUSTED_ORIGINS = [
+#     'https://backend-truckai-project.apps.cluster-bt99s.bt99s.sandbox1766.opentlc.com',
+#     'http://localhost:8000',
+#     'http://127.0.0.1:8000',
+# ]
+# CSRF_COOKIE_SECURE = not DEBUG
+# CSRF_COOKIE_HTTPONLY = False
 
 # Google Maps API
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
