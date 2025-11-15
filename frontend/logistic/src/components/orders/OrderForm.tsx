@@ -2,7 +2,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/ca
 import { Button } from '@/components/ui/button'
 import { Package, Weight, Ruler, Thermometer } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { createOrder, api, getCargoTypeOptions, getTemperatureOptions, getSpecialRequirementsOptions, calculateRoute } from '@/lib/api'
+import { api, getCargoTypeOptions, getTemperatureOptions, getSpecialRequirementsOptions, calculateRoute } from '@/lib/api'
 import type { Cargo, Route } from '@/lib/api'
 
 interface OrderFormData {
