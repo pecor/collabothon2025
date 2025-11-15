@@ -35,7 +35,8 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
             {orders.map((order, idx) => (
               <div 
                 key={idx} 
-                className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 cursor-pointer hover:border-red-500 hover:bg-zinc-700/50 transition-all"
+                className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 cursor-pointer hover:border-red-500 hover:bg-zinc-700/50 transition-all animate-in fade-in slide-in-from-bottom-4 duration-500"
+                style={{ animationDelay: `${idx * 100}ms`, animationFillMode: 'backwards' }}
                 onClick={() => handleOrderClick(order)}
               >
               <div className="flex items-center justify-between mb-2">

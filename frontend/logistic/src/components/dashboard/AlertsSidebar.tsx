@@ -11,6 +11,9 @@ interface AlertsSidebarProps {
   alerts: Alert[]
 }
 
+const weeklyAlerts = [2, 4, 3, 4, 1, 0, 2]
+const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
 export function AlertsSidebar({ alerts }: AlertsSidebarProps) {
   return (
     <div className="space-y-6">
@@ -47,13 +50,24 @@ export function AlertsSidebar({ alerts }: AlertsSidebarProps) {
 
       <Card className="bg-zinc-900 border-zinc-800">
         <CardHeader>
-          <CardTitle className="text-white text-lg mb-4">Weekly Chart</CardTitle>
-          <div className="h-48 bg-zinc-800 rounded-lg flex items-center justify-center border border-zinc-700">
-            <div className="text-center">
-              <BarChart3 className="h-12 w-12 text-red-500 mx-auto mb-2" />
-              <p className="text-zinc-400 text-sm">Chart.js / Recharts</p>
-            </div>
+          <CardTitle className="text-white text-lg mb-4">Weekly Alerts</CardTitle>
+          <div className="h-48 bg-zinc-800 rounded-lg flex items-end justify-between border border-zinc-700 px-4 pb-4">
+            {weeklyAlerts.map((count, idx) => (
+              <div key={idx} className="flex flex-col items-center justify-end h-full">
+                <div
+                  className="w-6 rounded bg-red-600"
+                  style={{
+                    height: `${count * 18}px`,
+                    minHeight: '8px',
+                    transition: 'height 0.3s',
+                  }}
+                  title={`${days[idx]}: ${count} alerts`}
+                />
+                <span className="text-zinc-400 text-xs mt-1">{days[idx]}</span>
+              </div>
+            ))}
           </div>
+          <p className="text-zinc-400 text-xs text-center mt-2">Alerts per day</p>
         </CardHeader>
       </Card>
     </div>

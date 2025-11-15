@@ -19,7 +19,10 @@ interface StatsCardsProps {
 export function StatsCards({ stats }: StatsCardsProps) {
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <Card className="bg-gradient-to-br from-blue-900/30 to-blue-950/20 border-blue-800">
+      <Card
+        className="bg-gradient-to-br from-blue-900/30 to-blue-950/20 border-blue-800 animate-glow-blue"
+        style={{ animationDelay: '0s' }}
+      >
         <CardHeader>
           <div className="flex items-center justify-between mb-2">
             <Package className="h-6 w-6 text-blue-400" />
@@ -30,8 +33,10 @@ export function StatsCards({ stats }: StatsCardsProps) {
           <p className="text-blue-300 text-xs mt-2">+12 this month</p>
         </CardHeader>
       </Card>
-
-      <Card className="bg-gradient-to-br from-green-900/30 to-green-950/20 border-green-800">
+      <Card
+        className="bg-gradient-to-br from-green-900/30 to-green-950/20 border-green-800 animate-glow-green"
+        style={{ animationDelay: '0.7s' }}
+      >
         <CardHeader>
           <div className="flex items-center justify-between mb-2">
             <DollarSign className="h-6 w-6 text-green-400" />
@@ -42,8 +47,10 @@ export function StatsCards({ stats }: StatsCardsProps) {
           <p className="text-green-300 text-xs mt-2">{stats.totalProfit.toLocaleString()} PLN profit</p>
         </CardHeader>
       </Card>
-
-      <Card className="bg-gradient-to-br from-purple-900/30 to-purple-950/20 border-purple-800">
+      <Card
+        className="bg-gradient-to-br from-purple-900/30 to-purple-950/20 border-purple-800 animate-glow-purple"
+        style={{ animationDelay: '1.4s' }}
+      >
         <CardHeader>
           <div className="flex items-center justify-between mb-2">
             <BarChart3 className="h-6 w-6 text-purple-400" />
@@ -54,8 +61,10 @@ export function StatsCards({ stats }: StatsCardsProps) {
           <p className="text-purple-300 text-xs mt-2">Orders with auto-match</p>
         </CardHeader>
       </Card>
-
-      <Card className="bg-gradient-to-br from-orange-900/30 to-orange-950/20 border-orange-800">
+      <Card
+        className="bg-gradient-to-br from-orange-900/30 to-orange-950/20 border-orange-800 animate-glow-orange"
+        style={{ animationDelay: '2.1s' }}
+      >
         <CardHeader>
           <div className="flex items-center justify-between mb-2">
             <Clock className="h-6 w-6 text-orange-400" />

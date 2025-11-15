@@ -296,31 +296,6 @@ export function RouteMap({ origin, destination, currentPosition, status, onRoute
         if (status === 'OK' && result && directionsRenderer.current && isMountedRef.current) {
           directionsRenderer.current.setDirections(result)
           console.log('Route drawn successfully')
-          
-          // Add country borders overlay
-          if (routeData.countries_passed && routeData.countries_passed.length > 0) {
-            routeData.countries_passed.forEach(country => {
-              const countryCode = country.code.toUpperCase()
-              
-              fetch(`https://raw.githubusercontent.com/johan/world.geo.json/master/countries/${countryCode}.geo.json`)
-                .then(response => response.json())
-                .then(geoJson => {
-                  if (map && isMountedRef.current) {
-                    // @ts-ignore - Google Maps Data Layer
-                    map.data.addGeoJson(geoJson);
-                    // @ts-ignore
-                    map.data.setStyle({
-                      strokeColor: '#dc2626',
-                      strokeWeight: 2,
-                      strokeOpacity: 0.8,
-                      fillColor: '#dc2626',
-                      fillOpacity: 0.1
-                    })
-                  }
-                })
-                .catch(() => console.log('Could not load border for', country.name))
-            })
-          }
         } else if (status !== 'OK') {
           console.warn('Directions request failed:', status)
         }
