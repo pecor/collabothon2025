@@ -141,13 +141,17 @@ SPECTACULAR_SETTINGS = {
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-# CSRF settings - Disabled for development/demo
+# CSRF settings
 # Middleware DisableCSRFForAPI already exempts /api/* endpoints
-# For admin panel, uncomment and add specific domains if needed:
-# CSRF_TRUSTED_ORIGINS = ['https://your-domain.com']
+# Trusted origins for CSRF protection
+CSRF_TRUSTED_ORIGINS = [
+    'https://backend-truckai-project.apps.cluster-bt99s.bt99s.sandbox1766.opentlc.com',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
 
-# Disable CSRF verification completely (dev/demo only!)
-CSRF_COOKIE_SECURE = False
+# CSRF cookie settings
+CSRF_COOKIE_SECURE = not DEBUG  # True in production, False in development
 CSRF_COOKIE_HTTPONLY = False
 
 # Google Maps API
