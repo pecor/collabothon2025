@@ -156,7 +156,7 @@ export function Matching() {
     return (
       <div className="min-h-screen bg-black text-white">
         <Navbar />
-        <main className="pt-24 pb-12 px-8">
+        <main className="pt-36 pb-12 px-8">
           <div className="max-w-7xl mx-auto text-center">
             <p className="text-zinc-400">Loading matching data...</p>
           </div>
@@ -169,7 +169,7 @@ export function Matching() {
     return (
       <div className="min-h-screen bg-black text-white">
         <Navbar />
-        <main className="pt-24 pb-12 px-8">
+        <main className="pt-36 pb-12 px-8">
           <div className="max-w-7xl mx-auto text-center">
             <p className="text-zinc-400">Order not found</p>
             <Button onClick={() => navigate('/orders')} className="mt-4">
@@ -185,7 +185,7 @@ export function Matching() {
     <div className="min-h-screen bg-black text-white">
       <Navbar />
 
-      <main className="pt-24 pb-12 px-8">
+      <main className="pt-36 pb-12 px-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
@@ -200,20 +200,20 @@ export function Matching() {
           {/* AI Analyze Button */}
           {!aiRecommendation && !assignmentSuccess && (
             <div className="bg-gradient-to-r from-red-950 to-red-900 border border-red-800 rounded-xl p-6 mb-8">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                    <Sparkles className="h-6 w-6 text-yellow-400" />
+              <div className="flex flex-col md:flex-row items-start md:items-center md:justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="text-xl md:text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                    <Sparkles className="h-8 w-8 md:h-6 md:w-6 text-yellow-400" />
                     AI-Powered Smart Matching
                   </h3>
-                  <p className="text-red-100">
+                  <p className="text-red-100 text-sm md:text-base">
                     Let our AI analyze and find the best driver and vehicle combination for this order
                   </p>
                 </div>
                 <Button
                   onClick={handleAIAnalyze}
                   disabled={isAnalyzing}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-8"
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-8 w-full md:w-auto"
                   size="lg"
                 >
                   {isAnalyzing ? (

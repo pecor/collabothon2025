@@ -75,7 +75,7 @@ export function Dashboard() {
     return (
       <div className="min-h-screen bg-black text-white">
         <Navbar />
-        <main className="pt-24 pb-12 px-8">
+        <main className="pt-36 pb-12 px-8">
           <div className="max-w-7xl mx-auto text-center">
             <p className="text-zinc-400">Loading dashboard...</p>
           </div>
@@ -88,7 +88,7 @@ export function Dashboard() {
     <div className="min-h-screen bg-black text-white">
       <Navbar />
 
-      <main className="pt-24 pb-12 px-8">
+      <main className="pt-36 pb-12 px-8">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl font-bold text-white mb-3">Analytics Dashboard</h2>
           <p className="text-zinc-400 text-lg mb-8">System efficiency and performance analysis</p>

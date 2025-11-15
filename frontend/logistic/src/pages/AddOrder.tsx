@@ -15,7 +15,7 @@ export function AddOrder() {
       <Navbar />
 
       {/* Main Content */}
-      <main className="pt-24 pb-12 px-8">
+      <main className="pt-36 pb-12 px-8">
         <div className="max-w-7xl mx-auto">
           {/* Page Title */}
           <div className="mb-8">

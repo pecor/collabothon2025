@@ -7,37 +7,37 @@ export function Docs() {
     {
       method: 'POST' as const,
       path: '/api/orders',
-      description: 'Dodaj nowe zlecenie',
+      description: 'Add a new order',
       body: '{ "cargo_type": "pallets", "weight": 24000, "route": {...} }'
     },
     {
       method: 'GET' as const,
       path: '/api/orders/{id}/match',
-      description: 'Pobierz rekomendacje AI dla zlecenia',
+      description: 'Get AI recommendations for an order',
       body: null
     },
     {
       method: 'GET' as const,
       path: '/api/vehicles',
-      description: 'Lista dostępnych pojazdów',
+      description: 'List of available vehicles',
       body: null
     },
     {
       method: 'GET' as const,
       path: '/api/drivers',
-      description: 'Lista dostępnych kierowców',
+      description: 'List of available drivers',
       body: null
     },
     {
       method: 'POST' as const,
       path: '/api/tracking/update',
-      description: 'Aktualizuj pozycję pojazdu',
+      description: 'Update vehicle position',
       body: '{ "vehicle_id": "123", "lat": 52.23, "lng": 21.01 }'
     },
     {
       method: 'GET' as const,
       path: '/api/holidays',
-      description: 'Kalendarz zakazów świątecznych',
+      description: 'Holiday traffic bans calendar',
       body: null
     }
   ]
@@ -45,17 +45,17 @@ export function Docs() {
   const models = [
     {
       name: 'Scoring Model',
-      description: 'Wylicza % dopasowania kierowca-pojazd-zlecenie',
+      description: 'Calculates match percentage for driver-vehicle-order',
       tech: 'Granite OSS + InstructLab fine-tuning'
     },
     {
       name: 'Email Parser',
-      description: 'Ekstrakcja danych ze zleceń mailowych',
+      description: 'Extracts data from email orders',
       tech: 'Llama Stack Agent + vLLM'
     },
     {
       name: 'Route Optimizer',
-      description: 'Optymalizacja tras i przewidywanie ETA',
+      description: 'Route optimization and ETA prediction',
       tech: 'Custom ML model + OSRM routing'
     }
   ]
@@ -64,13 +64,13 @@ export function Docs() {
     <div className="min-h-screen bg-black text-white">
       <Navbar />
 
-      <main className="pt-24 pb-12 px-8">
+      <main className="pt-36 pb-12 px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-3 mb-3">
             <BookOpen className="h-8 w-8 text-red-500" />
             <h2 className="text-4xl font-bold text-white">Technical Documentation</h2>
           </div>
-          <p className="text-zinc-400 text-lg mb-8">API endpoints, architecture and integration</p>
+          <p className="text-zinc-400 text-lg mb-8">API endpoints, architecture, and integration</p>
 
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">

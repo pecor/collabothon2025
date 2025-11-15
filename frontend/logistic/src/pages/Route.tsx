@@ -35,7 +35,7 @@ export function Route() {
     <div className="min-h-screen bg-black text-white">
       <Navbar />
 
-      <main className="pt-24 pb-12 px-8">
+      <main className="pt-36 pb-12 px-8">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl font-bold text-white mb-3">Route Visualization</h2>
           <p className="text-zinc-400 text-lg mb-8">Map, ETA and real-time monitoring</p>
