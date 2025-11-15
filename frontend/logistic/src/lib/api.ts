@@ -390,4 +390,33 @@ export const getHolidayLicenseAllowedOptions = async (): Promise<{ choices: Arra
   return response.data;
 };
 
+// AI Email Extraction
+export interface ExtractedOrderData {
+  cargo_name: string;
+  cargo_type: string;
+  weight: number;
+  temperature: string;
+  special_requirements: string;
+  loading_address: string;
+  unloading_address: string;
+  loading_date: string | null;
+  unloading_date: string | null;
+  adr_required: boolean;
+  vehicle_type: string;
+}
+
+export interface EmailExtractionResponse {
+  success: boolean;
+  data: ExtractedOrderData;
+  error?: string;
+  raw_ai_response?: string;
+}
+
+export const extractOrderFromEmail = async (emailContent: string): Promise<EmailExtractionResponse> => {
+  const response = await api.post<EmailExtractionResponse>('/orders/extract-from-email/', {
+    email_content: emailContent
+  });
+  return response.data;
+};
+
 export default api;

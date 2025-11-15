@@ -1642,3 +1642,65 @@ def format_duration(seconds):
     if hours > 0:
         return f"{hours}h {minutes}min"
     return f"{minutes}min"
+
+
+@api_view(['POST'])
+def extract_order_from_email(request):
+    """
+    Extract order data from email content using Granite AI
+    
+    Expects:
+    {
+        "email_content": "string - raw email text"
+    }
+    
+    Returns:
+    {
+        "success": true,
+        "data": {
+            "cargo_name": "...",
+            "cargo_type": "...",
+            "weight": 24000,
+            "temperature": "Ambient",
+            "special_requirements": "...",
+            "loading_address": "Warsaw",
+            "unloading_address": "Berlin",
+            "loading_date": "2025-11-20",
+            "unloading_date": "2025-11-22",
+            "adr_required": false,
+            "vehicle_type": "Curtain-side"
+        }
+    }
+    """
+    from .ai_extraction import extract_order_data_from_email
+    
+    email_content = request.data.get('email_content', '')
+    
+    if not email_content or len(email_content.strip()) < 10:
+        return Response({
+            'success': False,
+            'error': 'Email content is required and must be at least 10 characters'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Extract data using Granite AI
+    extracted_data = extract_order_data_from_email(email_content)
+    
+    if not extracted_data.get('success', True):
+        return Response({
+            'success': False,
+            'error': extracted_data.get('error', 'Failed to extract data'),
+            'raw_response': extracted_data.get('raw_response', ''),
+            'data': {
+                k: v for k, v in extracted_data.items() 
+                if k not in ['success', 'error', 'raw_response', 'raw_ai_response']
+            }
+        }, status=status.HTTP_200_OK)  # Still return 200 with partial data
+    
+    return Response({
+        'success': True,
+        'data': {
+            k: v for k, v in extracted_data.items() 
+            if k not in ['success', 'error', 'raw_response', 'raw_ai_response']
+        },
+        'raw_ai_response': extracted_data.get('raw_ai_response', '') if settings.DEBUG else None
+    })

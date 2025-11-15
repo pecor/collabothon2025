@@ -16,6 +16,7 @@ router.register(r'transport-laws', views.TransportLawViewSet, basename='transpor
 urlpatterns = [
     # Custom endpoints must be BEFORE router to avoid conflicts
     path('routes/calculate/', views.calculate_route, name='calculate_route'),
+    path('orders/extract-from-email/', views.extract_order_from_email, name='extract_order_from_email'),
     path('health/', views.health_check, name='health_check'),
     path('dashboard/stats/', views.dashboard_stats, name='dashboard_stats'),
     # Router URLs (must be last to catch remaining routes)
