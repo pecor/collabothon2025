@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Loader2, MapPin, Navigation } from 'lucide-react'
+import { api } from '@/lib/api'
 
 // Extend Window interface
 declare global {
@@ -144,23 +145,15 @@ export function RouteMap({ origin, destination, currentPosition, status, onRoute
       try {
         console.log(`Fetching route: ${origin} → ${destination}`)
         setIsLoading(true)
-        const response = await fetch('http://localhost:8000/api/routes/calculate/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            origin_address: origin,
-            destination_address: destination,
-            avoid_tolls: false,
-            avoid_highways: false,
-            avoid_ferries: false
-          })
+        const response = await api.post('/routes/calculate/', {
+          origin_address: origin,
+          destination_address: destination,
+          avoid_tolls: false,
+          avoid_highways: false,
+          avoid_ferries: false
         })
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: Failed to calculate route`)
-        }
-
-        const data = await response.json()
+        const data = response.data
         console.log('Route data received:', data)
         setRouteData(data)
         setError(null)
@@ -171,7 +164,7 @@ export function RouteMap({ origin, destination, currentPosition, status, onRoute
         }
       } catch (err: any) {
         console.error('Route calculation error:', err)
-        setError(err.message || 'Failed to load route')
+        setError(err.response?.data?.message || err.message || 'Failed to load route')
       } finally {
         setIsLoading(false)
       }
