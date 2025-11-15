@@ -17,8 +17,8 @@ export function Navbar() {
           className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity mb-2 md:mb-0"
           onClick={() => navigate('/')}
         >
-          <div className="bg-red-600 p-2 rounded-lg">
-            <Truck className="h-7 w-7 text-white" />
+          <div className="bg-white px-4 py-2 rounded-lg">
+            <img src="/logo2.png" alt="TruckAI Logo" className="h-10 w-16 object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-white">TruckAI</h1>
         </div>
