@@ -13,6 +13,7 @@ from .serializers import (
     RouteOptimizationSerializer, ProfitCalculationSerializer, TransportLawSerializer,
     RouteCalculationSerializer
 )
+from .ai_matching import ai_score_drivers
 
 
 @api_view(['GET'])
@@ -763,6 +764,74 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
     
+    @action(detail=True, methods=['get'])
+    def preview_assignment(self, request, pk=None):
+        """
+        Preview AI driver matching without actually assigning the order
+        Shows which drivers would be selected and their scores
+        """
+        order = self.get_object()
+        cargo = order.cargo
+        
+        # Find compatible drivers (same logic as assign())
+        compatible_drivers = User.objects.filter(is_active=True).select_related('current_vehicle')
+        
+        needs_adr = (order.special_requirements and 'adr' in order.special_requirements.lower()) or cargo.license_adr_required
+        needs_forklift = (order.special_requirements and 'forklift' in order.special_requirements.lower()) or cargo.forklift_needed
+        
+        if cargo.license_c_required:
+            compatible_drivers = compatible_drivers.filter(license_c=True)
+        if cargo.license_ce_required:
+            compatible_drivers = compatible_drivers.filter(license_ce=True)
+        if needs_adr:
+            compatible_drivers = compatible_drivers.filter(license_adr=True)
+        if needs_forklift:
+            compatible_drivers = compatible_drivers.filter(forklift_certified=True)
+        
+        # Exclude already assigned drivers
+        assigned_drivers = Order.objects.filter(
+            planned_date=order.planned_date,
+            status__in=['assigned', 'in_transit']
+        ).values_list('driver_id', flat=True)
+        compatible_drivers = compatible_drivers.exclude(id__in=assigned_drivers)
+        
+        if not compatible_drivers.exists():
+            return Response({
+                'error': 'No compatible drivers available',
+                'compatible_count': 0,
+                'candidates': []
+            })
+        
+        # Get AI scores
+        driver_scores = ai_score_drivers(order, compatible_drivers)
+        
+        # Add driver details to response
+        driver_ids = [s['driver_id'] for s in driver_scores]
+        drivers = User.objects.filter(id__in=driver_ids).select_related('current_vehicle')
+        driver_map = {d.id: d for d in drivers}
+        
+        candidates = []
+        for score_data in driver_scores[:10]:  # Top 10
+            driver = driver_map.get(score_data['driver_id'])
+            if driver:
+                candidates.append({
+                    'rank': len(candidates) + 1,
+                    'driver': UserSerializer(driver).data,
+                    'score': score_data['score'],
+                    'reason': score_data['reason'],
+                    'distance_to_origin_km': score_data.get('distance_km'),
+                    'has_vehicle': driver.current_vehicle is not None,
+                    'vehicle': VehicleSerializer(driver.current_vehicle).data if driver.current_vehicle else None
+                })
+        
+        return Response({
+            'order_id': order.id,
+            'order_route': f"{order.origin} → {order.destination}",
+            'compatible_count': compatible_drivers.count(),
+            'candidates': candidates,
+            'best_match': candidates[0] if candidates else None
+        })
+    
     @action(detail=True, methods=['post'])
     def assign(self, request, pk=None):
         """
@@ -923,26 +992,38 @@ class OrderViewSet(viewsets.ModelViewSet):
                 ]
             }, status=status.HTTP_404_NOT_FOUND)
         
-        # Select best vehicle and driver (simplified - would use AI scoring)
-        # Prefer vehicles that are already assigned to compatible drivers
-        selected_vehicle = None
-        selected_driver = None
+        # ==========================================
+        # 🚀 AI-POWERED DRIVER MATCHING
+        # ==========================================
+        # Use Granite AI to score and select the best driver
+        driver_scores = ai_score_drivers(order, compatible_drivers)
         
-        # First, try to find a driver with an assigned vehicle that matches requirements
-        for driver in compatible_drivers:
-            if driver.current_vehicle:
-                # Check if driver's vehicle is compatible
-                if driver.current_vehicle in compatible_vehicles:
-                    # Check if vehicle is not already assigned on this date
-                    if driver.current_vehicle.id not in assigned_vehicles:
-                        selected_driver = driver
-                        selected_vehicle = driver.current_vehicle
-                        break
+        # Get the best match (highest score)
+        best_driver_match = driver_scores[0] if driver_scores else None
         
-        # If no driver with assigned vehicle found, select separately
-        if not selected_vehicle or not selected_driver:
-            selected_vehicle = compatible_vehicles.first()
+        if not best_driver_match:
+            # Fallback to first driver if AI fails
             selected_driver = compatible_drivers.first()
+            ai_used = False
+            ai_score = None
+            ai_reason = "AI matching unavailable, used fallback"
+        else:
+            selected_driver = User.objects.get(id=best_driver_match['driver_id'])
+            ai_used = True
+            ai_score = best_driver_match['score']
+            ai_reason = best_driver_match['reason']
+        
+        # Select vehicle
+        selected_vehicle = None
+        
+        # First, try to use driver's assigned vehicle if it's compatible
+        if selected_driver.current_vehicle and selected_driver.current_vehicle in compatible_vehicles:
+            if selected_driver.current_vehicle.id not in assigned_vehicles:
+                selected_vehicle = selected_driver.current_vehicle
+        
+        # If no vehicle from driver, select first compatible vehicle
+        if not selected_vehicle:
+            selected_vehicle = compatible_vehicles.first()
         
         # Calculate estimated profit (simplified formula)
         # Real implementation would use AI model
@@ -968,6 +1049,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             selected_driver.current_vehicle = selected_vehicle
             selected_driver.save()
         
+        # Build response with AI matching details
         response_data = {
             'order_id': order.id,
             'assigned_vehicle': VehicleSerializer(selected_vehicle).data,
@@ -979,7 +1061,14 @@ class OrderViewSet(viewsets.ModelViewSet):
                 f"Vehicle {selected_vehicle.registration_no} meets all requirements",
                 f"Driver {selected_driver.name} has required licenses",
                 f"Both available on {planned_date}"
-            ]
+            ],
+            'ai_matching': {
+                'used': ai_used,
+                'score': ai_score,
+                'reason': ai_reason,
+                'distance_to_origin_km': best_driver_match.get('distance_km') if best_driver_match else None,
+                'all_candidates': driver_scores[:5] if len(driver_scores) > 1 else []  # Top 5 alternatives
+            }
         }
         
         return Response(response_data)
