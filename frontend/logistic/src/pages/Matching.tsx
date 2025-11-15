@@ -7,7 +7,6 @@ import {
   getVehicles, 
   getUsers,
   assignOrder,
-  previewAssignment,
   manualAssignOrder,
   type Order,
   type Route,
@@ -91,7 +90,7 @@ export function Matching() {
 
     try {
       // Use preview endpoint - doesn't assign yet, just shows recommendation
-      const result = await previewAssignment(currentOrder.id)
+      const result = await assignOrder(currentOrder.id)
       setAiRecommendation(result)
     } catch (err: any) {
       console.error('AI Analysis error:', err)
