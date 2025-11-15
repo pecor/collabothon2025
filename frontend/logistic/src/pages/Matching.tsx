@@ -7,6 +7,7 @@ import {
   getVehicles, 
   getUsers,
   assignOrder,
+  previewAssignment,
   manualAssignOrder,
   type Order,
   type Route,
@@ -89,7 +90,8 @@ export function Matching() {
     setError(null)
 
     try {
-      const result = await assignOrder(currentOrder.id)
+      // Use preview endpoint - doesn't assign yet, just shows recommendation
+      const result = await previewAssignment(currentOrder.id)
       setAiRecommendation(result)
     } catch (err: any) {
       console.error('AI Analysis error:', err)
@@ -103,15 +105,19 @@ export function Matching() {
     if (!aiRecommendation || !currentOrder) return
 
     setIsAssigning(true)
+    setError(null)
+    
     try {
-      // Order is already assigned by the /assign endpoint
+      // Now actually assign the order
+      await assignOrder(currentOrder.id)
       setAssignmentSuccess(true)
       
       setTimeout(() => {
         navigate('/orders')
       }, 2000)
     } catch (err: any) {
-      setError('Failed to assign order')
+      console.error('Assignment error:', err)
+      setError(err.response?.data?.error || 'Failed to assign order')
     } finally {
       setIsAssigning(false)
     }
@@ -390,7 +396,7 @@ export function Matching() {
                 ) : (
                   <>
                     <CheckCircle className="h-5 w-5 mr-2" />
-                    Assign Now
+                    Assign now
                     <ArrowRight className="h-5 w-5 ml-2" />
                   </>
                 )}
