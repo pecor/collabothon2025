@@ -152,28 +152,116 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        """Create order and calculate profit if cost and revenue are provided"""
-        # Calculate profit if both cost and revenue are provided
-        cost = validated_data.get('cost')
-        revenue = validated_data.get('revenue')
+        """Create order and auto-calculate cost, revenue, and profit based on route distance"""
+        print(f"\n{'='*80}")
+        print(f"[OrderCreateSerializer.create] CALLED!")
+        print(f"[OrderCreateSerializer.create] validated_data keys: {validated_data.keys()}")
         
-        if cost is not None and revenue is not None:
-            validated_data['profit'] = revenue - cost
+        route_id = validated_data.get('route')
+        print(f"[OrderCreateSerializer.create] route_id: {route_id}, type: {type(route_id)}")
         
+        # Get the Route object to access distance_km
+        if route_id:
+            from .models import Route as RouteModel
+            try:
+                # Handle both Route instance and ID
+                if hasattr(route_id, 'id'):
+                    route = route_id
+                    print(f"[OrderCreateSerializer.create] route_id is already a Route object")
+                else:
+                    print(f"[OrderCreateSerializer.create] Fetching Route from DB with id={route_id}")
+                    route = RouteModel.objects.get(id=route_id)
+                
+                print(f"[OrderCreateSerializer.create] route found: id={route.id}, origin={route.origin}, destination={route.destination}, distance_km={route.distance_km}")
+                
+                # Auto-calculate financial fields if route has distance
+                if route.distance_km and route.distance_km > 0:
+                    distance_km = route.distance_km
+                    
+                    # Formula: (distance_km * 0.8 + distance_km/100*30*6.15) * 1.1
+                    calculated_cost = (distance_km * 0.8 + distance_km / 100 * 30 * 6.15) * 1.1
+                    
+                    print(f"[OrderCreateSerializer.create] calculated_cost: {calculated_cost:.2f} PLN")
+                    
+                    # Always set cost if not provided
+                    if validated_data.get('cost') is None:
+                        validated_data['cost'] = round(calculated_cost, 2)
+                        print(f"[OrderCreateSerializer.create] Set cost to {validated_data['cost']}")
+                    
+                    # Always set revenue if not provided (cost + 30%)
+                    cost = validated_data.get('cost')
+                    if validated_data.get('revenue') is None and cost is not None:
+                        validated_data['revenue'] = round(cost * 1.3, 2)
+                        print(f"[OrderCreateSerializer.create] Set revenue to {validated_data['revenue']}")
+                    
+                    # Always set profit
+                    cost = validated_data.get('cost')
+                    revenue = validated_data.get('revenue')
+                    if cost is not None and revenue is not None:
+                        validated_data['profit'] = round(revenue - cost, 2)
+                        print(f"[OrderCreateSerializer.create] Set profit to {validated_data['profit']}")
+                    
+                    print(f"[OrderCreateSerializer.create] FINAL VALUES: cost={validated_data.get('cost')}, revenue={validated_data.get('revenue')}, profit={validated_data.get('profit')}")
+                else:
+                    print(f"[OrderCreateSerializer.create] ERROR: route has no distance_km or is 0! distance_km={route.distance_km}")
+            except (RouteModel.DoesNotExist, AttributeError) as e:
+                print(f"[OrderCreateSerializer.create] ERROR getting route: {e}")
+                import traceback
+                traceback.print_exc()
+        else:
+            print(f"[OrderCreateSerializer.create] ERROR: No route_id provided!")
+        
+        print(f"[OrderCreateSerializer.create] Calling super().create()")
+        print(f"{'='*80}\n")
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
-        """Update order and recalculate profit if cost or revenue changed"""
-        # Recalculate profit if cost or revenue are being updated
-        cost = validated_data.get('cost', instance.cost)
-        revenue = validated_data.get('revenue', instance.revenue)
+        """Update order and recalculate cost, revenue, profit based on route distance"""
+        route_id = validated_data.get('route', instance.route)
         
-        if cost is not None and revenue is not None:
-            validated_data['profit'] = revenue - cost
-        elif 'cost' in validated_data or 'revenue' in validated_data:
-            # If one is being set to None, set profit to None too
-            if cost is None or revenue is None:
-                validated_data['profit'] = None
+        # Get the Route object to access distance_km
+        route = None
+        if route_id:
+            from .models import Route as RouteModel
+            try:
+                # Handle both Route instance and ID
+                if hasattr(route_id, 'distance_km'):
+                    route = route_id
+                else:
+                    route = RouteModel.objects.get(id=route_id if isinstance(route_id, int) else route_id.id)
+            except (RouteModel.DoesNotExist, AttributeError):
+                route = instance.route if hasattr(instance, 'route') else None
+        
+        # Auto-recalculate if route changed or financial fields are being updated
+        if route and hasattr(route, 'distance_km') and route.distance_km and route.distance_km > 0:
+            distance_km = route.distance_km
+            
+            # If cost is not explicitly provided, recalculate it
+            if 'cost' not in validated_data:
+                calculated_cost = (distance_km * 0.8 + distance_km / 100 * 30 * 6.15) * 1.1
+                validated_data['cost'] = round(calculated_cost, 2)
+            
+            # If revenue is not explicitly provided, calculate it from cost
+            cost = validated_data.get('cost', instance.cost)
+            if 'revenue' not in validated_data and cost is not None:
+                validated_data['revenue'] = round(cost * 1.3, 2)
+            
+            # Calculate profit
+            cost = validated_data.get('cost', instance.cost)
+            revenue = validated_data.get('revenue', instance.revenue)
+            if cost is not None and revenue is not None:
+                validated_data['profit'] = round(revenue - cost, 2)
+        else:
+            # Manual recalculation if cost or revenue are being updated
+            cost = validated_data.get('cost', instance.cost)
+            revenue = validated_data.get('revenue', instance.revenue)
+            
+            if cost is not None and revenue is not None:
+                validated_data['profit'] = round(revenue - cost, 2)
+            elif 'cost' in validated_data or 'revenue' in validated_data:
+                # If one is being set to None, set profit to None too
+                if cost is None or revenue is None:
+                    validated_data['profit'] = None
         
         return super().update(instance, validated_data)
 

@@ -432,4 +432,56 @@ export const extractOrderFromEmail = async (emailContent: string): Promise<Email
   return response.data;
 };
 
+// Route Calculation with Google Maps
+export interface RouteCalculationData {
+  origin_address: string;
+  destination_address: string;
+  avoid_tolls?: boolean;
+  avoid_highways?: boolean;
+  avoid_ferries?: boolean;
+}
+
+export interface RouteCalculationResponse {
+  origin: {
+    address: string;
+    formatted_address: string;
+    coordinates: { lat: number; lng: number };
+  };
+  destination: {
+    address: string;
+    formatted_address: string;
+    coordinates: { lat: number; lng: number };
+  };
+  distance_km: number;
+  distance_miles: number;
+  distance_meters: number;
+  estimated_time_seconds: number;
+  estimated_time_hours: number;
+  estimated_time_formatted: string;
+  countries: string[];
+  cities: Array<{
+    name: string;
+    country: string;
+    coordinates: { lat: number; lng: number };
+  }>;
+  waypoints: Array<{ lat: number; lng: number }>;
+  route_summary: string;
+  summary: {
+    total_countries: number;
+    total_cities: number;
+    total_waypoints: number;
+    average_speed_kmh: number;
+  };
+  route_options: {
+    avoid_tolls: boolean;
+    avoid_highways: boolean;
+    avoid_ferries: boolean;
+  };
+}
+
+export const calculateRoute = async (data: RouteCalculationData): Promise<RouteCalculationResponse> => {
+  const response = await api.post<RouteCalculationResponse>('/routes/calculate/', data);
+  return response.data;
+};
+
 export default api;
