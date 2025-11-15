@@ -94,7 +94,7 @@ class UserViewSet(viewsets.ModelViewSet):
             assigned_drivers = Order.objects.filter(
                 planned_date=date,
                 status__in=['assigned', 'in_transit']
-            ).values_list('driver_id', flat=True)
+            ).select_related('driver').values_list('driver_id', flat=True)
             drivers = drivers.exclude(id__in=assigned_drivers)
         
         serializer = self.get_serializer(drivers, many=True)
@@ -159,7 +159,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def statistics(self, request, pk=None):
         """Get driver statistics"""
         driver = self.get_object()
-        orders = Order.objects.filter(driver=driver)
+        orders = Order.objects.filter(driver=driver).select_related('route', 'cargo', 'user', 'vehicle')
         
         stats = {
             'total_orders': orders.count(),
@@ -296,7 +296,7 @@ class VehicleViewSet(viewsets.ModelViewSet):
             assigned_vehicles = Order.objects.filter(
                 planned_date=date,
                 status__in=['assigned', 'in_transit']
-            ).values_list('vehicle_id', flat=True)
+            ).select_related('vehicle').values_list('vehicle_id', flat=True)
             vehicles = vehicles.exclude(id__in=assigned_vehicles)
         
         serializer = self.get_serializer(vehicles, many=True)
@@ -306,7 +306,7 @@ class VehicleViewSet(viewsets.ModelViewSet):
     def statistics(self, request, pk=None):
         """Get vehicle statistics"""
         vehicle = self.get_object()
-        orders = Order.objects.filter(vehicle=vehicle)
+        orders = Order.objects.filter(vehicle=vehicle).select_related('route', 'cargo', 'user', 'driver')
         
         stats = {
             'total_orders': orders.count(),
@@ -493,7 +493,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """Filter orders by origin and destination if provided"""
-        queryset = Order.objects.all()
+        queryset = Order.objects.select_related('route', 'cargo', 'user', 'vehicle', 'driver').all()
         
         # Filter by origin
         origin = self.request.query_params.get('origin')
@@ -677,7 +677,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def pending(self, request):
         """Get pending orders (new status)"""
-        orders = Order.objects.filter(status='new')
+        orders = Order.objects.filter(status='new').select_related('route', 'cargo', 'user', 'vehicle', 'driver')
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
     
@@ -759,7 +759,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def active(self, request):
         """Get active orders (assigned or in transit)"""
-        orders = Order.objects.filter(status__in=['assigned', 'in_transit'])
+        orders = Order.objects.filter(status__in=['assigned', 'in_transit']).select_related('route', 'cargo', 'user', 'vehicle', 'driver')
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
     
@@ -813,7 +813,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         assigned_vehicles = Order.objects.filter(
             planned_date=planned_date,
             status__in=['assigned', 'in_transit']
-        ).values_list('vehicle_id', flat=True)
+        ).select_related('vehicle').values_list('vehicle_id', flat=True)
         compatible_vehicles = compatible_vehicles.exclude(id__in=assigned_vehicles)
         
         # Find compatible drivers
@@ -836,7 +836,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         assigned_drivers = Order.objects.filter(
             planned_date=planned_date,
             status__in=['assigned', 'in_transit']
-        ).values_list('driver_id', flat=True)
+        ).select_related('driver').values_list('driver_id', flat=True)
         compatible_drivers = compatible_drivers.exclude(id__in=assigned_drivers)
         
         # Prefer drivers with assigned vehicles
@@ -1052,8 +1052,8 @@ class TrackerViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def active(self, request):
         """Get all active trackers"""
-        active_vehicles = Vehicle.objects.filter(status='in_transit')
-        trackers = Tracker.objects.filter(vehicle__in=active_vehicles)
+        active_vehicles = Vehicle.objects.filter(status='in_transit').select_related('current_driver')
+        trackers = Tracker.objects.filter(vehicle__in=active_vehicles).select_related('vehicle')
         serializer = self.get_serializer(trackers, many=True)
         return Response(serializer.data)
     
