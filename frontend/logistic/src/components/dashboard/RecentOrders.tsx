@@ -17,9 +17,10 @@ interface Order {
 
 interface RecentOrdersProps {
   orders: Order[]
+  onOrderUpdate?: () => void
 }
 
-export function RecentOrders({ orders }: RecentOrdersProps) {
+export function RecentOrders({ orders, onOrderUpdate }: RecentOrdersProps) {
   const [selectedOrder, setSelectedOrder] = useState<ApiOrder | null>(null)
 
   const handleOrderClick = (order: Order) => {
@@ -84,6 +85,7 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
         order={selectedOrder}
         isOpen={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
+        onUpdate={onOrderUpdate}
       />
     )}
     </>
