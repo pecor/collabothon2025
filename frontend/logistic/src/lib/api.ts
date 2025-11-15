@@ -290,6 +290,11 @@ export const assignOrder = async (id: number): Promise<OrderAssignmentResult> =>
   return response.data;
 };
 
+export const previewAssignment = async (id: number): Promise<OrderAssignmentResult> => {
+  const response = await api.get(`/orders/${id}/preview_assignment/`);
+  return response.data;
+};
+
 export const manualAssignOrder = async (
   id: number,
   vehicleId: number,

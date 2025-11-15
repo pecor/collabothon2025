@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Package, MapPin, Calendar, Weight, Plus, Search } from 'lucide-react'
+import { Package, MapPin, Calendar, Weight, Plus, Search, Route as RouteIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Navbar } from '@/components/layout'
 import { getOrders, getOrderStatusOptions, type Order as ApiOrder } from '@/lib/api'
+import { RouteRegulationsModal } from '@/components/orders/RouteRegulationsModal'
 
 interface Order {
   id: string
@@ -30,6 +31,8 @@ export function Orders() {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('new')
   const [statusOptions, setStatusOptions] = useState<Array<{ value: string; label: string }>>([])
+  const [routeModalOpen, setRouteModalOpen] = useState(false)
+  const [selectedRouteOrder, setSelectedRouteOrder] = useState<{ origin: string; destination: string } | null>(null)
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -118,6 +121,15 @@ export function Orders() {
     // Store selected order ID and navigate to matching
     sessionStorage.setItem('selectedOrderId', orderId)
     navigate(`/matching?orderId=${orderId}`)
+  }
+
+  const handleViewRoute = (e: React.MouseEvent, order: Order) => {
+    e.stopPropagation()
+    setSelectedRouteOrder({
+      origin: order.loadingAddress,
+      destination: order.unloadingAddress
+    })
+    setRouteModalOpen(true)
   }
 
   if (loading) {
@@ -257,10 +269,18 @@ export function Orders() {
                         </p>
                       </div>
                     </div>
-                    <div className="w-full sm:w-auto flex-shrink-0">
+                    <div className="w-full sm:w-auto flex-shrink-0 flex gap-2">
                       <Button
                         variant="outline"
-                        className="border-zinc-700 text-white hover:bg-red-600 hover:border-red-600 w-full sm:w-auto"
+                        className="border-zinc-700 text-white hover:bg-blue-600 hover:border-blue-600"
+                        onClick={(e) => handleViewRoute(e, order)}
+                      >
+                        <RouteIcon className="h-4 w-4 mr-2" />
+                        View Route
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="border-zinc-700 text-white hover:bg-red-600 hover:border-red-600"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleOrderClick(order.id)
@@ -327,6 +347,19 @@ export function Orders() {
           )}
         </div>
       </main>
+
+      {/* Route Regulations Modal */}
+      {selectedRouteOrder && (
+        <RouteRegulationsModal
+          isOpen={routeModalOpen}
+          onClose={() => {
+            setRouteModalOpen(false)
+            setSelectedRouteOrder(null)
+          }}
+          origin={selectedRouteOrder.origin}
+          destination={selectedRouteOrder.destination}
+        />
+      )}
 
       {/* Footer */}
       <footer className="py-8 px-8 border-t border-zinc-800 bg-black">
