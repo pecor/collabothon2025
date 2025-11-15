@@ -22,7 +22,6 @@ export function Matching() {
   const [searchParams] = useSearchParams()
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null)
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null)
-  const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [drivers, setDrivers] = useState<ApiUser[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -32,6 +31,7 @@ export function Matching() {
   const [assignmentSuccess, setAssignmentSuccess] = useState(false)
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
   const [selectedDriver, setSelectedDriver] = useState<ApiUser | null>(null)
+  const [driverVehicleMap, setDriverVehicleMap] = useState<Map<number, Vehicle>>(new Map())
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,8 +49,22 @@ export function Matching() {
         ])
 
         setCurrentOrder(orderData)
-        setVehicles(vehiclesData.filter(v => v.status === 'available'))
-        setDrivers(driversData.filter(d => d.is_active))
+        const availableVehicles = vehiclesData.filter(v => v.status === 'available')
+        const activeDrivers = driversData.filter(d => d.is_active)
+        
+        setDrivers(activeDrivers)
+
+        // Losowo przypisz pojazdy do kierowców
+        const vehicleMap = new Map<number, Vehicle>()
+        const shuffledVehicles = [...availableVehicles].sort(() => Math.random() - 0.5)
+        
+        activeDrivers.forEach((driver, index) => {
+          if (index < shuffledVehicles.length) {
+            vehicleMap.set(driver.id, shuffledVehicles[index])
+          }
+        })
+        
+        setDriverVehicleMap(vehicleMap)
 
         // Fetch route details
         if (orderData.route) {
@@ -439,123 +453,119 @@ export function Matching() {
                 </div>
               )}
 
-              <div className="grid md:grid-cols-2 gap-8">
-                {/* Available Vehicles */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Truck className="h-6 w-6 text-blue-400" />
-                    <h3 className="text-xl font-bold text-white">Available Vehicles ({vehicles.length})</h3>
-                  </div>
-                  <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                    {/* Custom scrollbar styles */}
-                    <style>{`
-                      .custom-scrollbar::-webkit-scrollbar {
-                        width: 10px;
-                        background: #18181b;
-                      }
-                      .custom-scrollbar::-webkit-scrollbar-thumb {
-                        background: #334155;
-                        border-radius: 8px;
-                        border: 2px solid #18181b;
-                      }
-                      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                        background: #2563eb;
-                      }
-                    `}</style>
-                    <div className="custom-scrollbar space-y-3 max-h-[600px] overflow-y-auto">
-                      {vehicles.slice(0, 10).map((vehicle) => (
-                        <div 
-                          key={vehicle.id} 
-                          onClick={() => setSelectedVehicle(vehicle)}
-                          className={`bg-zinc-800 border rounded-lg p-4 cursor-pointer transition-all hover:bg-zinc-750 ${
-                            selectedVehicle?.id === vehicle.id 
-                              ? 'border-blue-500 ring-2 ring-blue-500/50' 
-                              : 'border-zinc-700 hover:border-zinc-600'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-white font-medium">{vehicle.registration_no}</span>
-                            <span className="text-xs bg-blue-900/30 border border-blue-800 text-blue-400 px-2 py-1 rounded">
-                              {getVehicleTypeName(vehicle.type)}
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div>
-                              <span className="text-zinc-400">Capacity:</span>
-                              <p className="text-white">{vehicle.capacity_weight} kg</p>
-                            </div>
-                            <div>
-                              <span className="text-zinc-400">Volume:</span>
-                              <p className="text-white">{vehicle.capacity_volume} m³</p>
-                            </div>
-                          </div>
-                          {vehicle.has_forklift && (
-                            <div className="mt-2">
-                              <span className="text-xs bg-purple-900/30 border border-purple-800 text-purple-400 px-2 py-1 rounded">
-                                ✓ Forklift
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+              {/* Available Drivers with their Vehicles */}
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <User className="h-6 w-6 text-green-400" />
+                  <h3 className="text-xl font-bold text-white">Available Drivers & Vehicles ({drivers.length})</h3>
                 </div>
-
-                {/* Available Drivers */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <User className="h-6 w-6 text-green-400" />
-                    <h3 className="text-xl font-bold text-white">Available Drivers ({drivers.length})</h3>
-                  </div>
-                  <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                  {/* Custom scrollbar styles */}
-                  <style>{`
-                    .custom-scrollbar-driver::-webkit-scrollbar {
-                      width: 10px;
-                      background: #18181b;
-                    }
-                    .custom-scrollbar-driver::-webkit-scrollbar-thumb {
-                      background: #334155;
-                      border-radius: 8px;
-                      border: 2px solid #18181b;
-                    }
-                    .custom-scrollbar-driver::-webkit-scrollbar-thumb:hover {
-                      background: #22c55e;
-                    }
-                  `}</style>
-                  <div className="custom-scrollbar-driver space-y-3 max-h-[600px] overflow-y-auto">
-                    {drivers.slice(0, 10).map((driver) => (
+                
+                {/* Custom scrollbar styles */}
+                <style>{`
+                  .custom-scrollbar-combined::-webkit-scrollbar {
+                    width: 10px;
+                    background: #18181b;
+                  }
+                  .custom-scrollbar-combined::-webkit-scrollbar-thumb {
+                    background: #334155;
+                    border-radius: 8px;
+                    border: 2px solid #18181b;
+                  }
+                  .custom-scrollbar-combined::-webkit-scrollbar-thumb:hover {
+                    background: #22c55e;
+                  }
+                `}</style>
+                
+                <div className="custom-scrollbar-combined space-y-4 max-h-[700px] overflow-y-auto pr-2">
+                  {drivers.slice(0, 10).map((driver) => {
+                    // Get randomly assigned vehicle for this driver
+                    const driverVehicle = driverVehicleMap.get(driver.id)
+                    
+                    return (
                       <div 
                         key={driver.id} 
-                        onClick={() => setSelectedDriver(driver)}
-                        className={`bg-zinc-800 border rounded-lg p-4 cursor-pointer transition-all hover:bg-zinc-750 ${
+                        onClick={() => {
+                          setSelectedDriver(driver)
+                          if (driverVehicle) {
+                            setSelectedVehicle(driverVehicle)
+                          }
+                        }}
+                        className={`bg-zinc-800 border rounded-lg p-5 cursor-pointer transition-all hover:bg-zinc-750 ${
                           selectedDriver?.id === driver.id 
                             ? 'border-green-500 ring-2 ring-green-500/50' 
                             : 'border-zinc-700 hover:border-zinc-600'
                         }`}
                       >
-                        <p className="text-white font-medium mb-2">{driver.name}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {getDriverLicenses(driver).map((license) => (
-                            <span
-                              key={license}
-                              className={`text-xs px-2 py-1 rounded ${
-                                license === 'ADR'
-                                  ? 'bg-orange-900/30 border border-orange-800 text-orange-400'
-                                  : license === 'Forklift'
-                                  ? 'bg-purple-900/30 border border-purple-800 text-purple-400'
-                                  : 'bg-blue-900/30 border border-blue-800 text-blue-400'
-                              }`}
-                            >
-                              {license}
-                            </span>
-                          ))}
+                        {/* Driver Info */}
+                        <div className="flex items-start gap-4 mb-4">
+                          <div className="bg-green-900/30 border border-green-800 rounded-lg p-3">
+                            <User className="h-6 w-6 text-green-400" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-white font-bold text-lg mb-2">{driver.name}</p>
+                            <div className="flex flex-wrap gap-2">
+                              {getDriverLicenses(driver).map((license) => (
+                                <span
+                                  key={license}
+                                  className={`text-xs px-2 py-1 rounded font-medium ${
+                                    license === 'ADR'
+                                      ? 'bg-orange-900/30 border border-orange-800 text-orange-400'
+                                      : license === 'Forklift'
+                                      ? 'bg-purple-900/30 border border-purple-800 text-purple-400'
+                                      : 'bg-blue-900/30 border border-blue-800 text-blue-400'
+                                  }`}
+                                >
+                                  {license}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         </div>
+
+                        {/* Vehicle Info */}
+                        {driverVehicle ? (
+                          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Truck className="h-5 w-5 text-blue-400" />
+                              <span className="text-blue-400 font-semibold">Assigned Vehicle</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <span className="text-zinc-400 text-sm">Registration:</span>
+                                <p className="text-white font-medium">{driverVehicle.registration_no}</p>
+                              </div>
+                              <div>
+                                <span className="text-zinc-400 text-sm">Type:</span>
+                                <p className="text-white font-medium">{getVehicleTypeName(driverVehicle.type)}</p>
+                              </div>
+                              <div>
+                                <span className="text-zinc-400 text-sm">Capacity:</span>
+                                <p className="text-white font-medium">{driverVehicle.capacity_weight} kg</p>
+                              </div>
+                              <div>
+                                <span className="text-zinc-400 text-sm">Volume:</span>
+                                <p className="text-white font-medium">{driverVehicle.capacity_volume} m³</p>
+                              </div>
+                            </div>
+                            {driverVehicle.has_forklift && (
+                              <div className="mt-3">
+                                <span className="text-xs bg-purple-900/30 border border-purple-800 text-purple-400 px-2 py-1 rounded">
+                                  ✓ Forklift Available
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-4">
+                            <div className="flex items-center gap-2 text-zinc-500">
+                              <Truck className="h-5 w-5" />
+                              <span className="text-sm">No vehicle currently assigned</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                  </div>
+                    )
+                  })}
                 </div>
               </div>
             </>
