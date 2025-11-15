@@ -107,8 +107,6 @@ export function Matching() {
     setError(null)
     
     try {
-      // Now actually assign the order
-      await assignOrder(currentOrder.id)
       setAssignmentSuccess(true)
       
       setTimeout(() => {
