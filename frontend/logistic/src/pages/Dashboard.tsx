@@ -17,51 +17,51 @@ export function Dashboard() {
   const [recentOrders, setRecentOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [dashboardData, ordersData] = await Promise.all([
-          getDashboardStats(),
-          getActiveOrders()
-        ])
+  const fetchData = async () => {
+    try {
+      const [dashboardData, ordersData] = await Promise.all([
+        getDashboardStats(),
+        getActiveOrders()
+      ])
 
-        // Map dashboard stats
-        setStats({
-          totalOrders: dashboardData.orders.total,
-          activeOrders: dashboardData.orders.active,
-          completedToday: dashboardData.orders.completed,
-          avgTime: '11.2h', // TODO: Calculate from actual data
-          aiRecommendation: '94%', // TODO: Calculate from AI metrics
-          realROI: '+18.5%', // TODO: Calculate from profit data
-          totalProfit: 145200, // TODO: Sum from completed orders
-          savedTime: '42h' // TODO: Calculate from AI efficiency
-        })
+      // Map dashboard stats
+      setStats({
+        totalOrders: dashboardData.orders.total,
+        activeOrders: dashboardData.orders.active,
+        completedToday: dashboardData.orders.completed,
+        avgTime: '11.2h', // TODO: Calculate from actual data
+        aiRecommendation: '94%', // TODO: Calculate from AI metrics
+        realROI: '+18.5%', // TODO: Calculate from profit data
+        totalProfit: 145200, // TODO: Sum from completed orders
+        savedTime: '42h' // TODO: Calculate from AI efficiency
+      })
 
-        // Map active orders
-        const recent = ordersData
-          .map((order: Order) => ({
-            id: order.id,
-            route: order.route_info || 'Unknown',
-            status: order.status === 'in_transit' ? 'in-progress' as const : 
-                   order.status === 'completed' ? 'completed' as const : 
-                   'in-progress' as const,
-            profit: order.profit || 0,
-            loadingDate: order.loading_date || order.planned_date,
-            unloadingDate: order.unloading_date || order.planned_date,
-            driver: order.user_name || 'Not assigned',
-            vehicle: order.vehicle_info || 'Not assigned',
-            // Store full order for modal
-            fullOrder: order
-          }))
-        
-        setRecentOrders(recent)
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error)
-      } finally {
-        setLoading(false)
-      }
+      // Map active orders
+      const recent = ordersData
+        .map((order: Order) => ({
+          id: order.id,
+          route: order.route_info || 'Unknown',
+          status: order.status === 'in_transit' ? 'in-progress' as const : 
+                 order.status === 'completed' ? 'completed' as const : 
+                 'in-progress' as const,
+          profit: order.profit || 0,
+          loadingDate: order.loading_date || order.planned_date,
+          unloadingDate: order.unloading_date || order.planned_date,
+          driver: order.user_name || 'Not assigned',
+          vehicle: order.vehicle_info || 'Not assigned',
+          // Store full order for modal
+          fullOrder: order
+        }))
+      
+      setRecentOrders(recent)
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchData()
   }, [])
 
@@ -97,7 +97,7 @@ export function Dashboard() {
 
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
-              <RecentOrders orders={recentOrders} />
+              <RecentOrders orders={recentOrders} onOrderUpdate={fetchData} />
             </div>
             <AlertsSidebar alerts={alerts} />
           </div>

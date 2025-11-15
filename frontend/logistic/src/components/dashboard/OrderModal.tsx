@@ -1,12 +1,14 @@
-import { X, MapPin, User, DollarSign, Package, Calendar, Truck } from 'lucide-react'
+import { X, MapPin, User, DollarSign, Package, Calendar, Truck, Calculator } from 'lucide-react'
 import { type Order as ApiOrder } from '@/lib/api'
 import { RouteMap } from './RouteMap'
 import { useState } from 'react'
+import api from '@/lib/api'
 
 interface OrderModalProps {
   order: ApiOrder
   isOpen: boolean
   onClose: () => void
+  onUpdate?: () => void
 }
 
 interface RouteData {
@@ -14,10 +16,34 @@ interface RouteData {
   waypoints?: Array<{ lat: number; lng: number }>
 }
 
-export function OrderModal({ order, isOpen, onClose }: OrderModalProps) {
+export function OrderModal({ order, isOpen, onClose, onUpdate }: OrderModalProps) {
   const [routeData, setRouteData] = useState<RouteData | null>(null)
+  const [isCalculating, setIsCalculating] = useState(false)
+  const [calculationMessage, setCalculationMessage] = useState<string | null>(null)
 
   if (!isOpen) return null
+
+  const handleCalculateFinancials = async () => {
+    setIsCalculating(true)
+    setCalculationMessage(null)
+    
+    try {
+      const response = await api.post(`/orders/${order.id}/calculate_financials/`)
+      setCalculationMessage(`✓ Calculated: Cost ${response.data.cost} PLN, Revenue ${response.data.revenue} PLN, Profit ${response.data.profit} PLN`)
+      
+      // Refresh order data
+      if (onUpdate) {
+        setTimeout(() => {
+          onUpdate()
+          onClose()
+        }, 1500)
+      }
+    } catch (error: any) {
+      setCalculationMessage(`✗ Error: ${error.response?.data?.error || 'Failed to calculate'}`)
+    } finally {
+      setIsCalculating(false)
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -181,15 +207,28 @@ export function OrderModal({ order, isOpen, onClose }: OrderModalProps) {
                   <div className="flex items-center gap-2 mb-4">
                     <DollarSign className="h-5 w-5 text-red-500" />
                     <h3 className="text-white font-semibold text-lg">Financial</h3>
+                    <button
+                      onClick={handleCalculateFinancials}
+                      disabled={isCalculating}
+                      className="ml-auto bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 disabled:cursor-not-allowed px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-colors flex items-center gap-1.5"
+                    >
+                      <Calculator className="h-3.5 w-3.5" />
+                      {isCalculating ? 'Calculating...' : 'Calculate'}
+                    </button>
                   </div>
+                  {calculationMessage && (
+                    <div className={`mb-3 p-2 rounded text-xs ${calculationMessage.startsWith('✓') ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+                      {calculationMessage}
+                    </div>
+                  )}
                   <div className="space-y-3 text-sm">
                     <div>
                       <span className="text-zinc-400">Cost:</span>
-                      <p className="text-white font-medium">{order.cost ? `${order.cost.toLocaleString()} PLN` : 'Not specified'}</p>
+                      <p className="text-white font-medium">{order.cost ? `${order.cost.toLocaleString()} PLN` : 'Not calculated'}</p>
                     </div>
                     <div>
                       <span className="text-zinc-400">Revenue:</span>
-                      <p className="text-white font-medium">{order.revenue ? `${order.revenue.toLocaleString()} PLN` : 'Not specified'}</p>
+                      <p className="text-white font-medium">{order.revenue ? `${order.revenue.toLocaleString()} PLN` : 'Not calculated'}</p>
                     </div>
                     <div className="pt-2 border-t border-zinc-700">
                       <span className="text-zinc-400">Profit:</span>
