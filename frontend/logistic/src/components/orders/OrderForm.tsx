@@ -2,7 +2,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/ca
 import { Button } from '@/components/ui/button'
 import { Package, Weight, Ruler, Thermometer } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { createOrder, api, getCargoTypeOptions, getTemperatureOptions, getSpecialRequirementsOptions } from '@/lib/api'
+import { createOrder, api, getCargoTypeOptions, getTemperatureOptions, getSpecialRequirementsOptions, calculateRoute } from '@/lib/api'
 import type { Cargo, Route } from '@/lib/api'
 
 interface OrderFormData {
@@ -72,7 +72,32 @@ export function OrderForm() {
     setError(null)
     
     try {
-      // Step 1: Create Cargo
+      const origin = formData.loadingAddress || 'Warsaw'
+      const destination = formData.unloadingAddress || 'Berlin'
+      
+      // Step 1: Calculate route with Google Maps to get real distance
+      let distance_km = 500 // Default fallback
+      let estimated_time = '06:00:00'
+      
+      try {
+        const routeCalc = await calculateRoute({
+          origin_address: origin,
+          destination_address: destination,
+          avoid_tolls: false,
+          avoid_highways: false,
+          avoid_ferries: false
+        })
+        distance_km = routeCalc.distance_km
+        // Convert hours to HH:MM:SS format
+        const hours = Math.floor(routeCalc.estimated_time_hours)
+        const minutes = Math.round((routeCalc.estimated_time_hours - hours) * 60)
+        estimated_time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`
+        console.log('Route calculated:', routeCalc)
+      } catch (routeError) {
+        console.warn('Failed to calculate route, using defaults:', routeError)
+      }
+      
+      // Step 2: Create Cargo
       const cargoData = {
         name: formData.cargoType || 'Generic Cargo',
         length: parseFloat(formData.length) || 100,
@@ -92,52 +117,42 @@ export function OrderForm() {
       const cargoResponse = await api.post<Cargo>('/cargos/', cargoData)
       console.log('Cargo created:', cargoResponse.data)
       
-      // Step 2: Find or create Route
-      let route: Route | null = null
-      
-      // Try to find existing route using search endpoint
-      const routesResponse = await api.get<Route[]>('/routes/search/', {
-        params: {
-          origin: formData.loadingAddress,
-          destination: formData.unloadingAddress
-        }
-      })
-      
-      if (routesResponse.data.length > 0) {
-        route = routesResponse.data[0]
-        console.log('Found existing route:', route)
-      } else {
-        // Create new route (simplified - would need distance calculation in production)
-        const routeData = {
-          origin: formData.loadingAddress || 'Warsaw',
-          destination: formData.unloadingAddress || 'Berlin',
-          distance_km: 500, // Default distance
-          estimated_time: '06:00:00', // 6 hours default
-          holiday_blocked: false,
-          status: 'planned'
-        }
-        
-        const newRouteResponse = await api.post<Route>('/routes/', routeData)
-        route = newRouteResponse.data
-        console.log('Route created:', route)
+      // Step 3: Create Route with real distance
+      const routeData = {
+        origin,
+        destination,
+        distance_km,
+        estimated_time,
+        holiday_blocked: false,
+        status: 'planned'
       }
       
-      // Step 3: Create Order
-      if (!route) {
-        throw new Error('Failed to create or find route')
-      }
+      const newRouteResponse = await api.post<Route>('/routes/', routeData)
+      const route = newRouteResponse.data
+      console.log('Route created:', route)
       
+      // Step 4: Create Order - backend will auto-calculate cost/revenue/profit
       const orderData = {
         user: 1, // Default user - in production this would come from auth
         cargo: cargoResponse.data.id,
         route: route.id,
         planned_date: formData.loadingDate || new Date().toISOString().split('T')[0],
-        status: 'new'
+        status: 'new',
+        origin,
+        destination,
+        cargo_type: formData.cargoType || 'General Cargo',
+        weight: parseFloat(formData.weight) || 0,
+        temperature: formData.temperature || 'Ambient',
+        special_requirements: formData.specialRequirements || 'None',
+        loading_date: formData.loadingDate || new Date().toISOString().split('T')[0],
+        unloading_date: formData.unloadingDate || formData.loadingDate || new Date().toISOString().split('T')[0]
       }
       
       console.log('Creating order with data:', orderData)
-      const orderResponse = await createOrder(orderData)
-      console.log('Order created:', orderResponse)
+      const orderResponse = await api.post('/orders/', orderData)
+      console.log('Order created with financials:', orderResponse.data)
+      
+      alert(`Order created successfully!\n\nCost: ${orderResponse.data.cost?.toFixed(2)} PLN\nRevenue: ${orderResponse.data.revenue?.toFixed(2)} PLN\nProfit: ${orderResponse.data.profit?.toFixed(2)} PLN`)
       
       // Navigate to orders list
       window.location.href = '/orders'

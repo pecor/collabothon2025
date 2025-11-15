@@ -102,10 +102,10 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     status = serializers.ChoiceField(choices=Order.STATUS_CHOICES, default='new', required=False)
     special_requirements = serializers.CharField(required=False, allow_null=True, allow_blank=True, help_text="e.g. ADR, Forklift, Tarpaulin", style={'base_template': 'textarea.html'})
     
-    # Financial fields (optional)
-    cost = serializers.FloatField(required=False, allow_null=True, help_text="Total cost of the order")
-    revenue = serializers.FloatField(required=False, allow_null=True, help_text="Total revenue from the order")
-    profit = serializers.FloatField(required=False, allow_null=True, read_only=True, help_text="Profit (revenue - cost), calculated automatically")
+    # Financial fields (read-only, auto-calculated)
+    cost = serializers.FloatField(read_only=True, help_text="Total cost of the order (auto-calculated)")
+    revenue = serializers.FloatField(read_only=True, help_text="Total revenue from the order (auto-calculated)")
+    profit = serializers.FloatField(read_only=True, help_text="Profit (revenue - cost), calculated automatically")
     
     class Meta:
         model = Order
@@ -135,45 +135,55 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 'weight': 'Weight must be greater than 0.'
             })
         
-        # Validate financial fields
-        cost = data.get('cost')
-        revenue = data.get('revenue')
-        
-        if cost is not None and cost < 0:
-            raise serializers.ValidationError({
-                'cost': 'Cost cannot be negative.'
-            })
-        
-        if revenue is not None and revenue < 0:
-            raise serializers.ValidationError({
-                'revenue': 'Revenue cannot be negative.'
-            })
-        
         return data
     
     def create(self, validated_data):
-        """Create order and calculate profit if cost and revenue are provided"""
-        # Calculate profit if both cost and revenue are provided
-        cost = validated_data.get('cost')
-        revenue = validated_data.get('revenue')
+        """Create order and auto-calculate cost, revenue, and profit based on route distance"""
+        route = validated_data.get('route')
         
-        if cost is not None and revenue is not None:
-            validated_data['profit'] = revenue - cost
+        # ALWAYS auto-calculate financial fields based on route distance
+        if route and route.distance_km:
+            distance_km = route.distance_km
+            
+            # Formula: (distance_km * 0.8 + distance_km/100*30*6.15) * 1.1
+            calculated_cost = (distance_km * 0.8 + distance_km / 100 * 30 * 6.15) * 1.1
+            validated_data['cost'] = round(calculated_cost, 2)
+            
+            # Calculate revenue (cost + 30%)
+            validated_data['revenue'] = round(calculated_cost * 1.3, 2)
+            
+            # Calculate profit
+            validated_data['profit'] = round(validated_data['revenue'] - validated_data['cost'], 2)
+        else:
+            # If no route or distance, set to 0 to avoid NULL
+            validated_data['cost'] = 0.0
+            validated_data['revenue'] = 0.0
+            validated_data['profit'] = 0.0
         
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
-        """Update order and recalculate profit if cost or revenue changed"""
-        # Recalculate profit if cost or revenue are being updated
-        cost = validated_data.get('cost', instance.cost)
-        revenue = validated_data.get('revenue', instance.revenue)
+        """Update order and recalculate cost, revenue, profit based on route distance"""
+        route = validated_data.get('route', instance.route)
         
-        if cost is not None and revenue is not None:
-            validated_data['profit'] = revenue - cost
-        elif 'cost' in validated_data or 'revenue' in validated_data:
-            # If one is being set to None, set profit to None too
-            if cost is None or revenue is None:
-                validated_data['profit'] = None
+        # ALWAYS auto-recalculate financial fields based on route distance
+        if route and route.distance_km:
+            distance_km = route.distance_km
+            
+            # Formula: (distance_km * 0.8 + distance_km/100*30*6.15) * 1.1
+            calculated_cost = (distance_km * 0.8 + distance_km / 100 * 30 * 6.15) * 1.1
+            validated_data['cost'] = round(calculated_cost, 2)
+            
+            # Calculate revenue (cost + 30%)
+            validated_data['revenue'] = round(calculated_cost * 1.3, 2)
+            
+            # Calculate profit
+            validated_data['profit'] = round(validated_data['revenue'] - validated_data['cost'], 2)
+        else:
+            # If no route or distance, set to 0 to avoid NULL
+            validated_data['cost'] = 0.0
+            validated_data['revenue'] = 0.0
+            validated_data['profit'] = 0.0
         
         return super().update(instance, validated_data)
 

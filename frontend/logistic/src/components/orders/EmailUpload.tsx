@@ -9,7 +9,8 @@ import {
   getCargoTypeOptions,
   getTemperatureOptions,
   getSpecialRequirementsOptions,
-  getVehicleTypeOptions
+  getVehicleTypeOptions,
+  calculateRoute
 } from '@/lib/api'
 import { useNavigate } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
@@ -118,7 +119,32 @@ export function EmailUpload() {
     setIsEditModalOpen(false)
     
     try {
-      // Step 1: Create Cargo
+      const origin = (data as EditableOrderData)?.origin || orderData.loading_address || 'Unknown'
+      const destination = (data as EditableOrderData)?.destination || orderData.unloading_address || 'Unknown'
+      
+      // Step 1: Calculate route with Google Maps to get real distance
+      let distance_km = 500 // Default fallback
+      let estimated_time = '06:00:00'
+      
+      try {
+        const routeCalc = await calculateRoute({
+          origin_address: origin,
+          destination_address: destination,
+          avoid_tolls: false,
+          avoid_highways: false,
+          avoid_ferries: false
+        })
+        distance_km = routeCalc.distance_km
+        // Convert hours to HH:MM:SS format
+        const hours = Math.floor(routeCalc.estimated_time_hours)
+        const minutes = Math.round((routeCalc.estimated_time_hours - hours) * 60)
+        estimated_time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`
+        console.log('Route calculated:', routeCalc)
+      } catch (routeError) {
+        console.warn('Failed to calculate route, using defaults:', routeError)
+      }
+      
+      // Step 2: Create Cargo
       const cargoData = {
         name: orderData.cargo_name || 'Unknown Cargo',
         length: 120,
@@ -138,12 +164,12 @@ export function EmailUpload() {
       const cargoResponse = await api.post('/cargos/', cargoData)
       console.log('Cargo created:', cargoResponse.data)
       
-      // Step 2: Create Route
+      // Step 3: Create Route with real distance
       const routeData = {
-        origin: (data as EditableOrderData)?.origin || orderData.loading_address || 'Unknown',
-        destination: (data as EditableOrderData)?.destination || orderData.unloading_address || 'Unknown',
-        distance_km: 500,
-        estimated_time: '06:00:00',
+        origin,
+        destination,
+        distance_km,
+        estimated_time,
         holiday_blocked: false,
         status: 'planned'
       }
@@ -151,33 +177,33 @@ export function EmailUpload() {
       const routeResponse = await api.post('/routes/', routeData)
       console.log('Route created:', routeResponse.data)
       
-      // Step 3: Create Order with all required fields
+      // Step 4: Create Order - backend will auto-calculate cost/revenue/profit
       const newOrderData = {
         user: 1, // Default user
         cargo: cargoResponse.data.id,
         route: routeResponse.data.id,
         planned_date: orderData.loading_date || new Date().toISOString().split('T')[0],
         status: 'new',
-        // Required fields from OrderCreateSerializer
-        origin: (data as EditableOrderData)?.origin || orderData.loading_address || 'Unknown',
-        destination: (data as EditableOrderData)?.destination || orderData.unloading_address || 'Unknown',
+        origin,
+        destination,
         cargo_type: orderData.cargo_type || 'General Cargo',
         weight: orderData.weight || 0,
         temperature: orderData.temperature || 'Ambient',
         special_requirements: orderData.special_requirements || 'None',
         loading_date: orderData.loading_date || new Date().toISOString().split('T')[0],
         unloading_date: orderData.unloading_date || orderData.loading_date || new Date().toISOString().split('T')[0]
+        // cost, revenue, profit will be auto-calculated by backend based on distance_km
       }
       
       const orderResponse = await api.post('/orders/', newOrderData)
-      console.log('Order created:', orderResponse.data)
+      console.log('Order created with financials:', orderResponse.data)
       
-      setSuccessMessage(`Order has been created!`)
+      setSuccessMessage(`Order created! Cost: ${orderResponse.data.cost?.toFixed(2)} PLN, Revenue: ${orderResponse.data.revenue?.toFixed(2)} PLN, Profit: ${orderResponse.data.profit?.toFixed(2)} PLN`)
       
-      // Redirect to orders list after 2 seconds
+      // Redirect to orders list after 3 seconds
       setTimeout(() => {
         navigate('/orders')
-      }, 2000)
+      }, 3000)
       
     } catch (err: any) {
       console.error('Error creating order:', err)

@@ -764,6 +764,41 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'])
+    def calculate_financials(self, request, pk=None):
+        """Calculate and update cost, revenue, profit for an order based on route distance"""
+        order = self.get_object()
+        route = order.route
+        
+        if not route or not route.distance_km:
+            return Response(
+                {'error': 'Order must have a route with distance to calculate financials'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        distance_km = route.distance_km
+        
+        # Formula: (distance_km * 0.8 + distance_km/100*30*6.15) * 1.1
+        calculated_cost = (distance_km * 0.8 + distance_km / 100 * 30 * 6.15) * 1.1
+        order.cost = round(calculated_cost, 2)
+        
+        # Calculate revenue (cost + 30%)
+        order.revenue = round(calculated_cost * 1.3, 2)
+        
+        # Calculate profit
+        order.profit = round(order.revenue - order.cost, 2)
+        
+        order.save()
+        
+        return Response({
+            'success': True,
+            'message': 'Financial values calculated successfully',
+            'distance_km': distance_km,
+            'cost': order.cost,
+            'revenue': order.revenue,
+            'profit': order.profit
+        })
+    
+    @action(detail=True, methods=['post'])
     def assign(self, request, pk=None):
         """
         AI-powered automatic assignment of driver and vehicle to order
