@@ -824,12 +824,21 @@ class OrderViewSet(viewsets.ModelViewSet):
                     'vehicle': VehicleSerializer(driver.current_vehicle).data if driver.current_vehicle else None
                 })
         
+        # Format response compatible with OrderAssignmentResult interface
+        best_candidate = candidates[0] if candidates else None
+        
         return Response({
             'order_id': order.id,
-            'order_route': f"{order.origin} → {order.destination}",
-            'compatible_count': compatible_drivers.count(),
+            'assigned_driver': best_candidate['driver'] if best_candidate else None,
+            'assigned_vehicle': best_candidate['vehicle'] if best_candidate else None,
+            'estimated_profit': order.profit or 0,
+            'estimated_revenue': order.revenue or 0,
+            'warnings': [],
+            'assignment_reasons': [best_candidate['reason']] if best_candidate else [],
+            # Additional data for UI
             'candidates': candidates,
-            'best_match': candidates[0] if candidates else None
+            'compatible_count': compatible_drivers.count(),
+            'best_match': best_candidate
         })
     
     @action(detail=True, methods=['post'])
