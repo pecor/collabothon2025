@@ -1,7 +1,6 @@
 import requests
 import json
-import re
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 
 GRANITE_API_URL = "https://truckai-granite-vllm-truckai-project.apps.cluster-bt99s.bt99s.sandbox1766.opentlc.com/v1/chat/completions"

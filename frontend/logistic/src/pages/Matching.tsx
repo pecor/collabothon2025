@@ -1,179 +1,184 @@
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Sparkles, Eye, EyeOff, User, Package, Truck } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Navbar } from '@/components/layout'
-import { getOrder, getVehicles, getUsers, assignOrder, getCargo, getRoute } from '@/lib/api'
-import type { Cargo, Route } from '@/lib/api'
-import type { Order, Vehicle, User as ApiUser } from '@/lib/api'
-
-interface TruckerMatch {
-  id: string
-  score: number
-  vehicle: {
-    name: string
-    plate: string
-    type: string
-    capacity: number
-    features: string[]
-  }
-  driver: {
-    name: string
-    licenses: string[]
-    experience: number
-    rating: number
-  }
-  profit: number
-  cost: number
-  eta: string
-  reasons: string[]
-}
+import { 
+  getOrder, 
+  getCargo, 
+  getRoute, 
+  getVehicles, 
+  getUsers,
+  assignOrder,
+  manualAssignOrder,
+  type Order,
+  type Cargo,
+  type Route,
+  type Vehicle,
+  type User as ApiUser,
+  type OrderAssignmentResult
+} from '@/lib/api'
+import { Truck, User, Sparkles, CheckCircle, AlertCircle, ArrowRight, TrendingUp, Award } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export function Matching() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [showLowMatches, setShowLowMatches] = useState(false)
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null)
   const [currentCargo, setCurrentCargo] = useState<Cargo | null>(null)
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [drivers, setDrivers] = useState<ApiUser[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [aiRecommendation, setAiRecommendation] = useState<OrderAssignmentResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isAssigning, setIsAssigning] = useState(false)
+  const [assignmentSuccess, setAssignmentSuccess] = useState(false)
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
+  const [selectedDriver, setSelectedDriver] = useState<ApiUser | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       const orderId = searchParams.get('orderId')
-      if (orderId) {
-        try {
-          // Fetch order, vehicles, and drivers from API
-          const [orderData, vehiclesData, driversData] = await Promise.all([
-            getOrder(parseInt(orderId)),
-            getVehicles(),
-            getUsers()
-          ])
-          setCurrentOrder(orderData)
-          setVehicles(vehiclesData)
-          setDrivers(driversData)
-          
-          // Fetch cargo and route if order has them
-          if (orderData.cargo && typeof orderData.cargo === 'number') {
-            const cargoData = await getCargo(orderData.cargo)
-            setCurrentCargo(cargoData)
-          }
-          if (orderData.route && typeof orderData.route === 'number') {
-            const routeData = await getRoute(orderData.route)
-            setCurrentRoute(routeData)
-          }
-        } catch (error) {
-          console.error('Failed to fetch data:', error)
-          alert('Failed to load data from database')
-        } finally {
-          setIsLoading(false)
+      if (!orderId) {
+        navigate('/orders')
+        return
+      }
+
+      try {
+        const [orderData, vehiclesData, driversData] = await Promise.all([
+          getOrder(parseInt(orderId)),
+          getVehicles(),
+          getUsers()
+        ])
+
+        setCurrentOrder(orderData)
+        setVehicles(vehiclesData.filter(v => v.status === 'available'))
+        setDrivers(driversData.filter(d => d.is_active))
+
+        // Fetch cargo and route details
+        if (orderData.cargo) {
+          const cargoData = await getCargo(orderData.cargo)
+          setCurrentCargo(cargoData)
         }
-      } else {
+        if (orderData.route) {
+          const routeData = await getRoute(orderData.route)
+          setCurrentRoute(routeData)
+        }
+      } catch (error) {
+        console.error('Failed to fetch data:', error)
+        setError('Failed to load order data')
+      } finally {
         setIsLoading(false)
       }
     }
-    fetchData()
-  }, [searchParams])
 
-  // Generate matches from real database data
-  const allMatches: TruckerMatch[] = vehicles.slice(0, 6).map((vehicle, index) => {
-    const driver = drivers[index % drivers.length]
-    const score = 98 - (index * 7)
-    
-    // Map vehicle type to English names
+    fetchData()
+  }, [searchParams, navigate])
+
+  const handleAIAnalyze = async () => {
+    if (!currentOrder) return
+
+    setIsAnalyzing(true)
+    setError(null)
+
+    try {
+      const result = await assignOrder(currentOrder.id)
+      setAiRecommendation(result)
+    } catch (err: any) {
+      console.error('AI Analysis error:', err)
+      setError(err.response?.data?.error || 'Failed to analyze order. Please try again.')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  const handleAssignNow = async () => {
+    if (!aiRecommendation || !currentOrder) return
+
+    setIsAssigning(true)
+    try {
+      // Order is already assigned by the /assign endpoint
+      setAssignmentSuccess(true)
+      
+      setTimeout(() => {
+        navigate('/orders')
+      }, 2000)
+    } catch (err: any) {
+      setError('Failed to assign order')
+    } finally {
+      setIsAssigning(false)
+    }
+  }
+
+  const handleManualAssign = async () => {
+    if (!selectedVehicle || !selectedDriver || !currentOrder) {
+      setError('Please select both a vehicle and a driver')
+      return
+    }
+
+    setIsAssigning(true)
+    setError(null)
+
+    try {
+      await manualAssignOrder(currentOrder.id, selectedVehicle.id, selectedDriver.id)
+      setAssignmentSuccess(true)
+      
+      setTimeout(() => {
+        navigate('/orders')
+      }, 2000)
+    } catch (err: any) {
+      console.error('Manual assignment error:', err)
+      setError(err.response?.data?.error || 'Failed to assign order manually')
+    } finally {
+      setIsAssigning(false)
+    }
+  }
+
+  const getVehicleTypeName = (type: string) => {
     const typeMap: Record<string, string> = {
       'refrigerated': 'Refrigerated',
       'box': 'Box',
       'cargo': 'Curtain-side'
     }
-    
-    // Get driver licenses
+    return typeMap[type] || type
+  }
+
+  const getDriverLicenses = (driver: ApiUser) => {
     const licenses = []
-    if (driver?.license_c) licenses.push('C')
-    if (driver?.license_ce) licenses.push('C+E')
-    if (driver?.license_adr) licenses.push('ADR')
-    if (driver?.forklift_certified) licenses.push('Forklift')
-    
-    return {
-      id: vehicle.id.toString(),
-      score: score,
-      vehicle: {
-        name: vehicle.registration_no,
-        plate: vehicle.registration_no,
-        type: typeMap[vehicle.type] || vehicle.type,
-        capacity: vehicle.capacity_weight,
-        features: [
-          vehicle.has_forklift ? 'Forklift' : null,
-          'GPS',
-          vehicle.type === 'refrigerated' ? 'Refrigerated' : null
-        ].filter(Boolean) as string[]
-      },
-      driver: {
-        name: driver?.name || 'Unknown',
-        licenses: licenses,
-        experience: 5 + index * 2,
-        rating: 4.8 - (index * 0.1)
-      },
-      profit: 3400 - (index * 300),
-      cost: 1800 + (index * 50),
-      eta: `${12 + index}h ${20 + (index * 15)}min`,
-      reasons: [
-        score >= 90 ? 'Full compliance with order requirements' : 'Basic requirements met',
-        `Load capacity ${vehicle.capacity_weight} kg`,
-        driver?.name ? `Driver: ${driver.name}` : 'Driver available',
-        vehicle.status === 'available' ? 'Vehicle available immediately' : 'Vehicle in use',
-        score >= 90 ? 'Highest estimated profit' : 'Good profitability'
-      ]
-    }
-  })
-
-  // Sort by score descending
-  const sortedMatches = [...allMatches].sort((a, b) => b.score - a.score)
-  
-  // Filter matches based on threshold
-  const highMatches = sortedMatches.filter(m => m.score >= 60)
-  const lowMatches = sortedMatches.filter(m => m.score < 60)
-
-  const displayedMatches = showLowMatches ? sortedMatches : highMatches
-
-  const getMatchCardBg = (score: number) => {
-    if (score >= 90) return 'bg-gradient-to-br from-green-900/30 to-green-950/20 border-green-800'
-    if (score >= 75) return 'bg-gradient-to-br from-blue-900/30 to-blue-950/20 border-blue-800'
-    if (score >= 60) return 'bg-gradient-to-br from-yellow-900/30 to-yellow-950/20 border-yellow-800'
-    return 'bg-gradient-to-br from-red-900/30 to-red-950/20 border-red-800'
+    if (driver.license_c) licenses.push('C')
+    if (driver.license_ce) licenses.push('C+E')
+    if (driver.license_adr) licenses.push('ADR')
+    if (driver.forklift_certified) licenses.push('Forklift')
+    return licenses
   }
 
-  const getScoreBadge = (score: number) => {
-    if (score >= 90) return { text: 'PERFECT', color: 'bg-green-600 text-white' }
-    if (score >= 75) return { text: 'VERY GOOD', color: 'bg-blue-600 text-white' }
-    if (score >= 60) return { text: 'ACCEPTABLE', color: 'bg-yellow-600 text-black' }
-    return { text: 'NOT RECOMMENDED', color: 'bg-red-600 text-white' }
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Navbar />
+        <main className="pt-24 pb-12 px-8">
+          <div className="max-w-7xl mx-auto text-center">
+            <p className="text-zinc-400">Loading matching data...</p>
+          </div>
+        </main>
+      </div>
+    )
   }
 
-  // @ts-ignore - match parameter kept for UI callback compatibility
-  const handleSelectMatch = async (match: TruckerMatch) => {
-    const orderId = searchParams.get('orderId')
-    if (!orderId || !currentOrder) {
-      alert('No order data!')
-      return
-    }
-
-    try {
-      // Call AI assignment endpoint
-      const result = await assignOrder(parseInt(orderId))
-      alert(
-        `✅ Order Assigned!\n\n` +
-        `Vehicle: ${result.assigned_vehicle.registration_no}\n` +
-        `Driver: ${result.assigned_driver.name}\n` +
-        `Profit: ${result.estimated_profit} PLN`
-      )
-      navigate('/orders')
-    } catch (error: any) {
-      console.error('Failed to assign:', error)
-      alert(`Failed: ${error.response?.data?.error || error.message}`)
-    }
+  if (!currentOrder) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Navbar />
+        <main className="pt-24 pb-12 px-8">
+          <div className="max-w-7xl mx-auto text-center">
+            <p className="text-zinc-400">Order not found</p>
+            <Button onClick={() => navigate('/orders')} className="mt-4">
+              Back to Orders
+            </Button>
+          </div>
+        </main>
+      </div>
+    )
   }
 
   return (
@@ -182,241 +187,384 @@ export function Matching() {
 
       <main className="pt-24 pb-12 px-8">
         <div className="max-w-7xl mx-auto">
-          {isLoading ? (
-            <div className="text-center py-12">
-              <p className="text-white">Loading...</p>
-            </div>
-          ) : !currentOrder ? (
-            <div className="text-center py-12">
-              <p className="text-white">No order data!</p>
-            </div>
-          ) : (
-            <>
-          <div className="flex items-center gap-3 mb-3">
-            <Sparkles className="h-8 w-8 text-red-500" />
-            <h2 className="text-4xl font-bold text-white">Matched Truckers</h2>
+          {/* Header */}
+          <div className="mb-8">
+            <h2 className="text-4xl font-bold text-white mb-3">
+              AI Matching & Assignment
+            </h2>
+            <p className="text-zinc-400 text-lg">
+              Order #{currentOrder.id} - {currentRoute?.origin} → {currentRoute?.destination}
+            </p>
           </div>
-          <p className="text-zinc-400 text-lg mb-8">
-            Best vehicle + driver combinations for your order • Found {allMatches.length} matches
-          </p>
 
-          {/* Current Order Info */}
-          {currentOrder && (
-            <div className="bg-gradient-to-r from-red-900/30 to-red-950/20 border border-red-800 rounded-xl p-6 mb-8">
-              <div className="flex items-start gap-4">
-                <div className="bg-red-600 p-3 rounded-lg">
-                  <Package className="h-6 w-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-white text-xl font-bold mb-2">
-                    Order: {currentCargo?.name || 'No description'}
+          {/* AI Analyze Button */}
+          {!aiRecommendation && !assignmentSuccess && (
+            <div className="bg-gradient-to-r from-red-950 to-red-900 border border-red-800 rounded-xl p-6 mb-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                    <Sparkles className="h-6 w-6 text-yellow-400" />
+                    AI-Powered Smart Matching
                   </h3>
-                  <div className="grid md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <span className="text-red-300">Route:</span>
-                      <p className="text-white font-medium">{currentRoute?.origin} → {currentRoute?.destination}</p>
-                    </div>
-                    <div>
-                      <span className="text-red-300">Weight:</span>
-                      <p className="text-white font-medium">{currentCargo?.weight} kg</p>
-                    </div>
-                    <div>
-                      <span className="text-red-300">Dimensions:</span>
-                      <p className="text-white font-medium">{currentCargo?.length} × {currentCargo?.width} × {currentCargo?.height} cm</p>
-                    </div>
-                  </div>
+                  <p className="text-red-100">
+                    Let our AI analyze and find the best driver and vehicle combination for this order
+                  </p>
+                </div>
+                <Button
+                  onClick={handleAIAnalyze}
+                  disabled={isAnalyzing}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold px-8"
+                  size="lg"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Sparkles className="h-5 w-5 mr-2 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-5 w-5 mr-2" />
+                      AI Analyze & Match
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Error Display */}
+          {error && (
+            <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 mb-8">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-400 mt-0.5" />
+                <div>
+                  <h4 className="text-red-400 font-semibold mb-1">Error</h4>
+                  <p className="text-red-300 text-sm">{error}</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Stats Summary */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
-            <div className="bg-green-900/20 border border-green-800 rounded-lg p-4">
-              <p className="text-green-400 text-sm mb-1">Perfect match</p>
-              <p className="text-white text-2xl font-bold">{allMatches.filter(m => m.score >= 90).length}</p>
+          {/* Success Message */}
+          {assignmentSuccess && (
+            <div className="bg-green-900/20 border border-green-800 rounded-lg p-6 mb-8">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="h-6 w-6 text-green-400 mt-0.5" />
+                <div>
+                  <h4 className="text-green-400 font-semibold mb-1 text-xl">Order Assigned Successfully!</h4>
+                  <p className="text-green-300">Redirecting to orders list...</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4">
-              <p className="text-blue-400 text-sm mb-1">Very good</p>
-              <p className="text-white text-2xl font-bold">{allMatches.filter(m => m.score >= 75 && m.score < 90).length}</p>
-            </div>
-            <div className="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4">
-              <p className="text-yellow-400 text-sm mb-1">Acceptable</p>
-              <p className="text-white text-2xl font-bold">{allMatches.filter(m => m.score >= 60 && m.score < 75).length}</p>
-            </div>
-            <div className="bg-red-900/20 border border-red-800 rounded-lg p-4">
-              <p className="text-red-400 text-sm mb-1">Low match</p>
-              <p className="text-white text-2xl font-bold">{lowMatches.length}</p>
-            </div>
-          </div>
+          )}
 
-          {/* Toggle low matches */}
-          {lowMatches.length > 0 && (
-            <div className="mb-6">
+          {/* AI Recommendation */}
+          {aiRecommendation && !assignmentSuccess && (
+            <div className="bg-gradient-to-br from-green-950 to-green-900/50 border-2 border-green-500 rounded-xl p-6 mb-8 shadow-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <Award className="h-6 w-6 text-green-400" />
+                <h3 className="text-2xl font-bold text-white">AI Recommendation - Best Match</h3>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6 mb-6">
+                {/* Recommended Vehicle */}
+                <div className="bg-zinc-900 border border-green-800 rounded-lg p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Truck className="h-5 w-5 text-green-400" />
+                    <h4 className="text-white font-bold">Recommended Vehicle</h4>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-zinc-400">Registration:</span>
+                      <p className="text-white font-medium">{aiRecommendation.assigned_vehicle.registration_no}</p>
+                    </div>
+                    <div>
+                      <span className="text-zinc-400">Type:</span>
+                      <p className="text-white font-medium">{getVehicleTypeName(aiRecommendation.assigned_vehicle.type)}</p>
+                    </div>
+                    <div>
+                      <span className="text-zinc-400">Capacity:</span>
+                      <p className="text-white font-medium">{aiRecommendation.assigned_vehicle.capacity_weight} kg</p>
+                    </div>
+                    {aiRecommendation.assigned_vehicle.has_forklift && (
+                      <div className="bg-blue-900/30 border border-blue-800 rounded px-2 py-1 inline-block">
+                        <span className="text-blue-400 text-xs">✓ Has Forklift</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Recommended Driver */}
+                <div className="bg-zinc-900 border border-green-800 rounded-lg p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <User className="h-5 w-5 text-green-400" />
+                    <h4 className="text-white font-bold">Recommended Driver</h4>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-zinc-400">Name:</span>
+                      <p className="text-white font-medium">{aiRecommendation.assigned_driver.name}</p>
+                    </div>
+                    <div>
+                      <span className="text-zinc-400">Licenses:</span>
+                      <div className="flex gap-2 mt-1">
+                        {aiRecommendation.assigned_driver.license_c && (
+                          <span className="bg-blue-900/30 border border-blue-800 rounded px-2 py-0.5 text-blue-400 text-xs">C</span>
+                        )}
+                        {aiRecommendation.assigned_driver.license_ce && (
+                          <span className="bg-blue-900/30 border border-blue-800 rounded px-2 py-0.5 text-blue-400 text-xs">C+E</span>
+                        )}
+                        {aiRecommendation.assigned_driver.license_adr && (
+                          <span className="bg-orange-900/30 border border-orange-800 rounded px-2 py-0.5 text-orange-400 text-xs">ADR</span>
+                        )}
+                        {aiRecommendation.assigned_driver.forklift_certified && (
+                          <span className="bg-purple-900/30 border border-purple-800 rounded px-2 py-0.5 text-purple-400 text-xs">Forklift</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Financial Info */}
+              <div className="bg-zinc-900/50 border border-green-800 rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-4">
+                  <TrendingUp className="h-5 w-5 text-green-400" />
+                  <div className="flex-1">
+                    <span className="text-zinc-400 text-sm">Estimated Profit:</span>
+                    <p className="text-green-400 font-bold text-2xl">{aiRecommendation.estimated_profit.toLocaleString()} PLN</p>
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-zinc-400 text-sm">Estimated Revenue:</span>
+                    <p className="text-white font-bold text-xl">{aiRecommendation.estimated_revenue.toLocaleString()} PLN</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Assignment Reasons */}
+              <div className="bg-zinc-900/50 border border-green-800 rounded-lg p-4 mb-6">
+                <h5 className="text-white font-semibold mb-2">Why this match?</h5>
+                <ul className="space-y-1">
+                  {aiRecommendation.assignment_reasons.map((reason, idx) => (
+                    <li key={idx} className="text-green-300 text-sm flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      {reason}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Warnings */}
+              {aiRecommendation.warnings && aiRecommendation.warnings.length > 0 && (
+                <div className="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4 mb-6">
+                  <h5 className="text-yellow-400 font-semibold mb-2 flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    Warnings
+                  </h5>
+                  <ul className="space-y-1">
+                    {aiRecommendation.warnings.map((warning, idx) => (
+                      <li key={idx} className="text-yellow-300 text-sm">• {warning}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Assign Button */}
               <Button
-                variant="outline"
-                className="border-zinc-700 text-white hover:bg-zinc-900"
-                onClick={() => setShowLowMatches(!showLowMatches)}
+                onClick={handleAssignNow}
+                disabled={isAssigning}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-6 text-lg"
               >
-                {showLowMatches ? (
+                {isAssigning ? (
                   <>
-                    <EyeOff className="h-4 w-4 mr-2" />
-                    Hide low matches
+                    <Sparkles className="h-5 w-5 mr-2 animate-spin" />
+                    Assigning...
                   </>
                 ) : (
                   <>
-                    <Eye className="h-4 w-4 mr-2" />
-                    Show all ({lowMatches.length} hidden)
+                    <CheckCircle className="h-5 w-5 mr-2" />
+                    Assign Now
+                    <ArrowRight className="h-5 w-5 ml-2" />
                   </>
                 )}
               </Button>
             </div>
           )}
 
-          {/* Matches List */}
-          <div className="space-y-6">
-            {displayedMatches.map((match, index) => {
-              const badge = getScoreBadge(match.score)
-              
-              return (
-                <div
-                  key={match.id}
-                  className={`border rounded-xl p-6 ${getMatchCardBg(match.score)} hover:scale-[1.01] transition-all`}
-                >
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                      <div className="bg-black/30 rounded-full w-12 h-12 flex items-center justify-center text-2xl font-bold text-white border border-zinc-700">
-                        #{index + 1}
+          {/* Available Resources (shown when no recommendation yet) */}
+          {!aiRecommendation && !assignmentSuccess && (
+            <>
+              {/* Manual Assignment Section */}
+              {(selectedVehicle || selectedDriver) && (
+                <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 mb-8">
+                  <h3 className="text-white font-bold text-lg mb-4">Manual Selection</h3>
+                  <div className="grid md:grid-cols-2 gap-4 mb-4">
+                    {selectedVehicle && (
+                      <div className="bg-zinc-800 border border-blue-600 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Truck className="h-4 w-4 text-blue-400" />
+                          <span className="text-blue-400 font-semibold text-sm">Selected Vehicle</span>
+                        </div>
+                        <p className="text-white font-medium">{selectedVehicle.registration_no}</p>
+                        <p className="text-zinc-400 text-sm">{getVehicleTypeName(selectedVehicle.type)} - {selectedVehicle.capacity_weight} kg</p>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-2xl font-bold text-white">
-                            {match.score}% Match
-                          </h3>
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${badge.color}`}>
-                            {badge.text}
-                          </span>
+                    )}
+                    {selectedDriver && (
+                      <div className="bg-zinc-800 border border-green-600 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <User className="h-4 w-4 text-green-400" />
+                          <span className="text-green-400 font-semibold text-sm">Selected Driver</span>
                         </div>
-                        <p className="text-zinc-400">Estimated profit: <span className="text-green-400 font-bold">{match.profit} PLN</span> • Cost: {match.cost} PLN • ETA: {match.eta}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Vehicle + Driver Grid */}
-                  <div className="grid md:grid-cols-2 gap-6 mb-6">
-                    {/* Vehicle */}
-                    <div className="bg-black/30 rounded-lg p-5 border border-zinc-700">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Truck className="h-6 w-6 text-red-500" />
-                        <div>
-                          <h4 className="text-white font-bold text-lg">{match.vehicle.name}</h4>
-                          <p className="text-zinc-400 text-sm">{match.vehicle.plate}</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-zinc-400">Type:</span>
-                          <span className="text-white font-medium">{match.vehicle.type}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-zinc-400">Capacity:</span>
-                          <span className="text-white font-medium">{match.vehicle.capacity} kg</span>
-                        </div>
-                        <div className="mt-3">
-                          <span className="text-zinc-400 text-xs block mb-2">Features:</span>
-                          <div className="flex flex-wrap gap-2">
-                            {match.vehicle.features.map((feat, i) => (
-                              <span key={i} className="px-2 py-1 bg-zinc-800 rounded text-xs text-zinc-300">
-                                {feat}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Driver */}
-                    <div className="bg-black/30 rounded-lg p-5 border border-zinc-700">
-                      <div className="flex items-center gap-3 mb-4">
-                        <User className="h-6 w-6 text-red-500" />
-                        <div>
-                          <h4 className="text-white font-bold text-lg">{match.driver.name}</h4>
-                          <p className="text-zinc-400 text-sm">{match.driver.experience} years experience</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2 text-sm mb-3">
-                        <div className="flex justify-between">
-                          <span className="text-zinc-400">Rating:</span>
-                          <span className="text-white font-medium">⭐ {match.driver.rating.toFixed(1)} / 5.0</span>
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-zinc-400 text-xs block mb-2">Licenses:</span>
-                        <div className="flex flex-wrap gap-2">
-                          {match.driver.licenses.map((lic, i) => (
-                            <span key={i} className="px-2 py-1 bg-zinc-800 rounded text-xs text-zinc-300 font-medium">
-                              {lic}
+                        <p className="text-white font-medium">{selectedDriver.name}</p>
+                        <div className="flex gap-1 mt-1">
+                          {getDriverLicenses(selectedDriver).slice(0, 3).map((license) => (
+                            <span key={license} className="text-xs bg-blue-900/30 border border-blue-800 text-blue-400 px-1.5 py-0.5 rounded">
+                              {license}
                             </span>
                           ))}
                         </div>
                       </div>
+                    )}
+                  </div>
+                  <Button
+                    onClick={handleManualAssign}
+                    disabled={!selectedVehicle || !selectedDriver || isAssigning}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                  >
+                    {isAssigning ? (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2 animate-spin" />
+                        Assigning...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Assign Selected Vehicle & Driver
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Available Vehicles */}
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Truck className="h-6 w-6 text-blue-400" />
+                    <h3 className="text-xl font-bold text-white">Available Vehicles ({vehicles.length})</h3>
+                  </div>
+                  <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                    {/* Custom scrollbar styles */}
+                    <style>{`
+                      .custom-scrollbar::-webkit-scrollbar {
+                        width: 10px;
+                        background: #18181b;
+                      }
+                      .custom-scrollbar::-webkit-scrollbar-thumb {
+                        background: #334155;
+                        border-radius: 8px;
+                        border: 2px solid #18181b;
+                      }
+                      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                        background: #2563eb;
+                      }
+                    `}</style>
+                    <div className="custom-scrollbar space-y-3 max-h-[600px] overflow-y-auto">
+                      {vehicles.slice(0, 10).map((vehicle) => (
+                        <div 
+                          key={vehicle.id} 
+                          onClick={() => setSelectedVehicle(vehicle)}
+                          className={`bg-zinc-800 border rounded-lg p-4 cursor-pointer transition-all hover:bg-zinc-750 ${
+                            selectedVehicle?.id === vehicle.id 
+                              ? 'border-blue-500 ring-2 ring-blue-500/50' 
+                              : 'border-zinc-700 hover:border-zinc-600'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-white font-medium">{vehicle.registration_no}</span>
+                            <span className="text-xs bg-blue-900/30 border border-blue-800 text-blue-400 px-2 py-1 rounded">
+                              {getVehicleTypeName(vehicle.type)}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <span className="text-zinc-400">Capacity:</span>
+                              <p className="text-white">{vehicle.capacity_weight} kg</p>
+                            </div>
+                            <div>
+                              <span className="text-zinc-400">Volume:</span>
+                              <p className="text-white">{vehicle.capacity_volume} m³</p>
+                            </div>
+                          </div>
+                          {vehicle.has_forklift && (
+                            <div className="mt-2">
+                              <span className="text-xs bg-purple-900/30 border border-purple-800 text-purple-400 px-2 py-1 rounded">
+                                ✓ Forklift
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
+                </div>
 
-                  {/* Reasons */}
-                  <div className="bg-black/30 rounded-lg p-5 border border-zinc-700">
-                    <h5 className="text-white font-semibold mb-3 flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-red-500" />
-                      Why this combination?
-                    </h5>
-                    <ul className="space-y-2">
-                      {match.reasons.map((reason, i) => (
-                        <li key={i} className="text-zinc-300 text-sm flex items-start gap-2">
-                          <span className="text-red-500 mt-0.5">•</span>
-                          {reason}
-                        </li>
-                      ))}
-                    </ul>
+                {/* Available Drivers */}
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <User className="h-6 w-6 text-green-400" />
+                    <h3 className="text-xl font-bold text-white">Available Drivers ({drivers.length})</h3>
                   </div>
-
-                  {/* Action */}
-                  <div className="mt-6 flex gap-3">
-                    <Button 
-                      className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                      size="lg"
-                      onClick={() => handleSelectMatch(match)}
-                    >
-                      Select this combination
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      className="border-zinc-700 text-white hover:bg-zinc-800"
-                      size="lg"
-                      onClick={() => navigate(`/route?orderId=${searchParams.get('orderId')}`)}
-                    >
-                      View Route
-                    </Button>
+                  <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                  {/* Custom scrollbar styles */}
+                  <style>{`
+                    .custom-scrollbar-driver::-webkit-scrollbar {
+                      width: 10px;
+                      background: #18181b;
+                    }
+                    .custom-scrollbar-driver::-webkit-scrollbar-thumb {
+                      background: #334155;
+                      border-radius: 8px;
+                      border: 2px solid #18181b;
+                    }
+                    .custom-scrollbar-driver::-webkit-scrollbar-thumb:hover {
+                      background: #22c55e;
+                    }
+                  `}</style>
+                  <div className="custom-scrollbar-driver space-y-3 max-h-[600px] overflow-y-auto">
+                    {drivers.slice(0, 10).map((driver) => (
+                      <div 
+                        key={driver.id} 
+                        onClick={() => setSelectedDriver(driver)}
+                        className={`bg-zinc-800 border rounded-lg p-4 cursor-pointer transition-all hover:bg-zinc-750 ${
+                          selectedDriver?.id === driver.id 
+                            ? 'border-green-500 ring-2 ring-green-500/50' 
+                            : 'border-zinc-700 hover:border-zinc-600'
+                        }`}
+                      >
+                        <p className="text-white font-medium mb-2">{driver.name}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {getDriverLicenses(driver).map((license) => (
+                            <span
+                              key={license}
+                              className={`text-xs px-2 py-1 rounded ${
+                                license === 'ADR'
+                                  ? 'bg-orange-900/30 border border-orange-800 text-orange-400'
+                                  : license === 'Forklift'
+                                  ? 'bg-purple-900/30 border border-purple-800 text-purple-400'
+                                  : 'bg-blue-900/30 border border-blue-800 text-blue-400'
+                              }`}
+                            >
+                              {license}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                   </div>
                 </div>
-              )
-            })}
-          </div>
-
-          {!showLowMatches && lowMatches.length > 0 && (
-            <div className="mt-8 p-6 bg-zinc-900 border border-zinc-800 rounded-lg text-center">
-              <p className="text-zinc-400 mb-3">
-                Hidden {lowMatches.length} matches with low compatibility (&lt;60%)
-              </p>
-              <Button
-                variant="outline"
-                className="border-zinc-700 text-white hover:bg-zinc-900"
-                onClick={() => setShowLowMatches(true)}
-              >
-                Show all matches
-              </Button>
-            </div>
-          )}
+              </div>
             </>
           )}
         </div>
@@ -431,5 +579,3 @@ export function Matching() {
     </div>
   )
 }
-
-

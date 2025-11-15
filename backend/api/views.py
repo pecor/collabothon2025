@@ -1,18 +1,15 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
-from django.db.models import Q, Count, Avg
+from django.db.models import Q
 from datetime import datetime, timedelta
 import googlemaps
-import os
 from django.conf import settings
 from drf_spectacular.utils import extend_schema, OpenApiExample
-from drf_spectacular.types import OpenApiTypes
 from .models import User, Vehicle, Route, Cargo, Order, Tracker, Holiday, TransportLaw
 from .serializers import (
     UserSerializer, VehicleSerializer, RouteSerializer, CargoSerializer,
     OrderSerializer, OrderCreateSerializer, TrackerSerializer, HolidaySerializer,
-    OrderAssignmentSerializer, VehicleAvailabilitySerializer, DriverAvailabilitySerializer,
     RouteOptimizationSerializer, ProfitCalculationSerializer, TransportLawSerializer,
     RouteCalculationSerializer
 )

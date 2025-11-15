@@ -290,6 +290,19 @@ export const assignOrder = async (id: number): Promise<OrderAssignmentResult> =>
   return response.data;
 };
 
+export const manualAssignOrder = async (
+  id: number,
+  vehicleId: number,
+  driverId: number
+): Promise<Order> => {
+  const response = await api.patch(`/orders/${id}/`, {
+    vehicle: vehicleId,
+    driver: driverId,
+    status: 'assigned'
+  });
+  return response.data;
+};
+
 export const completeOrder = async (id: number): Promise<Order> => {
   const response = await api.post(`/orders/${id}/complete/`);
   return response.data;

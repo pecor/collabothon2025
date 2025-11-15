@@ -8,7 +8,7 @@ import { Navbar } from '@/components/layout'
 type InputMode = 'manual' | 'email'
 
 export function AddOrder() {
-  const [inputMode, setInputMode] = useState<InputMode>('manual')
+  const [inputMode, setInputMode] = useState<InputMode>('email')
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -30,18 +30,6 @@ export function AddOrder() {
           {/* Input Mode Toggle */}
           <div className="flex gap-3 mb-8">
             <Button
-              onClick={() => setInputMode('manual')}
-              variant={inputMode === 'manual' ? 'default' : 'outline'}
-              className={
-                inputMode === 'manual'
-                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : 'border-zinc-700 text-white hover:bg-zinc-900'
-              }
-              size="lg"
-            >
-              Manual Form
-            </Button>
-            <Button
               onClick={() => setInputMode('email')}
               variant={inputMode === 'email' ? 'default' : 'outline'}
               className={
@@ -52,6 +40,18 @@ export function AddOrder() {
               size="lg"
             >
               Upload / Email AI
+            </Button>
+            <Button
+              onClick={() => setInputMode('manual')}
+              variant={inputMode === 'manual' ? 'default' : 'outline'}
+              className={
+                inputMode === 'manual'
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'border-zinc-700 text-white hover:bg-zinc-900'
+              }
+              size="lg"
+            >
+              Manual Form
             </Button>
           </div>
 
