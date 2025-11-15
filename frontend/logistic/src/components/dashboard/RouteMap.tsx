@@ -144,7 +144,7 @@ export function RouteMap({ origin, destination, currentPosition, status, onRoute
       try {
         console.log(`Fetching route: ${origin} → ${destination}`)
         setIsLoading(true)
-        const response = await fetch('http://localhost:1333/api/routes/calculate/', {
+        const response = await fetch('http://localhost:8000/api/routes/calculate/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
