@@ -18,7 +18,12 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key-change-in-producti
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
+# Get allowed hosts from environment variable
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+# Add OpenShift specific hosts
+if os.getenv('OPENSHIFT_BUILD_NAME'):
+    ALLOWED_HOSTS.append('*')  # For OpenShift, allow all hosts (can be restricted later)
 
 # Application definition
 INSTALLED_APPS = [

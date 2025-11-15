@@ -3,11 +3,15 @@
 # Exit on error
 set -e
 
-echo "Waiting for PostgreSQL..."
-while ! pg_isready -h db -p 5432 -U $POSTGRES_USER; do
-    sleep 1
-done
-echo "PostgreSQL is ready!"
+# For OpenShift: Skip waiting for db if using external database
+# Database should already be running and accessible
+echo "Checking PostgreSQL connection..."
+if pg_isready -h ${POSTGRES_HOST:-localhost} -p ${POSTGRES_PORT:-5432} -U ${POSTGRES_USER:-postgres} -t 5; then
+    echo "PostgreSQL is ready!"
+else
+    echo "Warning: Could not connect to PostgreSQL immediately, but continuing..."
+    echo "Database migrations may fail if database is not accessible"
+fi
 
 echo "Running database migrations..."
 python manage.py makemigrations --noinput
