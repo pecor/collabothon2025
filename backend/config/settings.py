@@ -18,12 +18,8 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key-change-in-producti
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-# Get allowed hosts from environment variable
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-
-# Add OpenShift specific hosts
-if os.getenv('OPENSHIFT_BUILD_NAME'):
-    ALLOWED_HOSTS.append('*')  # For OpenShift, allow all hosts (can be restricted later)
+# Allow all hosts (for development/demo - restrict in production!)
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -145,19 +141,14 @@ SPECTACULAR_SETTINGS = {
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-# Alternative: If you need credentials, use whitelist instead:
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "http://127.0.0.1:3000",
-#     "http://localhost:5173",
-#     "http://localhost:5174",
-#     "http://127.0.0.1:5173",
-#     "http://127.0.0.1:5174",
-#     "http://localhost:8000",
-#     "http://127.0.0.1:8000",
-# ]
-# CORS_ALLOW_CREDENTIALS = True
+# CSRF settings - Disabled for development/demo
+# Middleware DisableCSRFForAPI already exempts /api/* endpoints
+# For admin panel, uncomment and add specific domains if needed:
+# CSRF_TRUSTED_ORIGINS = ['https://your-domain.com']
 
+# Disable CSRF verification completely (dev/demo only!)
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False
 
 # Google Maps API
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', '')
