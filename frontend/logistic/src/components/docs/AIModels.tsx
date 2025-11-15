@@ -17,7 +17,7 @@ export function AIModels({ models }: AIModelsProps) {
       <CardHeader>
         <CardTitle className="text-white text-2xl flex items-center gap-2 mb-4">
           <Zap className="h-6 w-6 text-red-500" />
-          Modele AI
+          AI Models
         </CardTitle>
         <div className="space-y-3">
           {models.map((model, idx) => (

@@ -124,7 +124,7 @@ export function Orders() {
     return (
       <div className="min-h-screen bg-black text-white">
         <Navbar />
-        <main className="pt-24 pb-12 px-8">
+        <main className="pt-36 pb-12 px-8">
           <div className="max-w-7xl mx-auto text-center">
             <p className="text-zinc-400">Loading orders...</p>
           </div>
@@ -138,7 +138,7 @@ export function Orders() {
       <Navbar />
 
       {/* Main Content */}
-      <main className="pt-24 pb-12 px-8">
+      <main className="pt-36 pb-12 px-8">
         <div className="max-w-7xl mx-auto">
           {/* Page Title */}
           <div className="mb-8 flex items-center justify-between">
@@ -161,7 +161,7 @@ export function Orders() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div className="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4">
               <p className="text-yellow-400 text-sm mb-1">Pending</p>
               <p className="text-white text-2xl font-bold">
@@ -238,35 +238,37 @@ export function Orders() {
                   onClick={() => handleOrderClick(order.id)}
                   className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all cursor-pointer"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start gap-4 flex-1">
+                  <div className="flex flex-wrap items-start justify-between mb-4 gap-2">
+                    <div className="flex items-start gap-4 flex-1 min-w-0">
                       <div className="bg-zinc-800 p-3 rounded-lg">
                         <Package className="h-6 w-6 text-red-500" />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-white text-xl font-bold">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <h3 className="text-white text-xl font-bold break-words">
                             {order.cargoType || 'Brak opisu'}
                           </h3>
                           <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
                             {getStatusText(order.status)}
                           </span>
                         </div>
-                        <p className="text-zinc-500 text-sm">
+                        <p className="text-zinc-500 text-sm truncate">
                           Added: {new Date(order.createdAt).toLocaleString('en-US')}
                         </p>
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      className="border-zinc-700 text-white hover:bg-red-600 hover:border-red-600"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleOrderClick(order.id)
-                      }}
-                    >
-                      Match Driver
-                    </Button>
+                    <div className="w-full sm:w-auto flex-shrink-0">
+                      <Button
+                        variant="outline"
+                        className="border-zinc-700 text-white hover:bg-red-600 hover:border-red-600 w-full sm:w-auto"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleOrderClick(order.id)
+                        }}
+                      >
+                        Match Driver
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -13,15 +13,44 @@ interface APIEndpointsProps {
 }
 
 export function APIEndpoints({ endpoints }: APIEndpointsProps) {
+  // ...existing code...
+  // Add missing endpoints from backend
+  const extraEndpoints: Endpoint[] = [
+    {
+      method: 'POST',
+      path: '/api/routes/calculate/',
+      description: 'Calculate route, distance, and time between two addresses',
+      body: '{ "origin_address": "Warsaw, Poland", "destination_address": "Berlin, Germany", "avoid_tolls": false, "avoid_highways": false, "avoid_ferries": false }'
+    },
+    {
+      method: 'POST',
+      path: '/api/orders/extract-from-email/',
+      description: 'Extract order details from email content',
+      body: '{ "email_body": "..." }'
+    },
+    {
+      method: 'GET',
+      path: '/api/dashboard/stats/',
+      description: 'Get dashboard statistics',
+      body: null
+    },
+    {
+      method: 'GET',
+      path: '/api/transport-laws/',
+      description: 'List of transport laws',
+      body: null
+    }
+  ];
+
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader>
         <CardTitle className="text-white text-2xl flex items-center gap-2 mb-4">
           <Code className="h-6 w-6 text-red-500" />
-          Dostępne endpointy
+          Available Endpoints
         </CardTitle>
         <div className="space-y-3">
-          {endpoints.map((endpoint, idx) => (
+          {[...endpoints, ...extraEndpoints].map((endpoint, idx) => (
             <div key={idx} className="bg-zinc-800 border border-zinc-700 rounded-lg p-4">
               <div className="flex items-start gap-3 mb-2">
                 <span

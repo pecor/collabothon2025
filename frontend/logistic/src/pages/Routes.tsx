@@ -66,7 +66,7 @@ export function Routes() {
     return (
       <div className="min-h-screen bg-black text-white">
         <Navbar />
-        <main className="pt-24 pb-12 px-8">
+        <main className="pt-36 pb-12 px-8">
           <div className="max-w-7xl mx-auto">
             <p className="text-zinc-400">Loading routes...</p>
           </div>
@@ -79,7 +79,7 @@ export function Routes() {
     <div className="min-h-screen bg-black text-white">
       <Navbar />
 
-      <main className="pt-24 pb-12 px-8">
+      <main className="pt-36 pb-12 px-8">
         <div className="max-w-7xl mx-auto">
           {/* Page Title */}
           <div className="mb-8">
