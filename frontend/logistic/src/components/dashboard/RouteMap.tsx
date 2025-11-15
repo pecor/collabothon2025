@@ -13,6 +13,7 @@ interface RouteMapProps {
   destination: string
   currentPosition?: { lat: number; lng: number } | null
   status?: string
+  onRouteDataLoaded?: (data: RouteData) => void
 }
 
 interface RouteData {
@@ -21,13 +22,14 @@ interface RouteData {
   distance_km: number
   estimated_time_formatted: string
   countries_passed: Array<{ name: string; code: string }>
+  cities?: Array<{ name: string; country: string; country_code: string; coordinates: { lat: number; lng: number } }>
   waypoints?: Array<{ lat: number; lng: number }>
 }
 
 // Global flag to prevent multiple Google Maps loads
 let isGoogleMapsLoading = false
 
-export function RouteMap({ origin, destination, currentPosition, status }: RouteMapProps) {
+export function RouteMap({ origin, destination, currentPosition, status, onRouteDataLoaded }: RouteMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const [map, setMap] = useState<google.maps.Map | null>(null)
   const [routeData, setRouteData] = useState<RouteData | null>(null)
@@ -162,6 +164,11 @@ export function RouteMap({ origin, destination, currentPosition, status }: Route
         console.log('Route data received:', data)
         setRouteData(data)
         setError(null)
+        
+        // Notify parent component about route data
+        if (onRouteDataLoaded) {
+          onRouteDataLoaded(data)
+        }
       } catch (err: any) {
         console.error('Route calculation error:', err)
         setError(err.message || 'Failed to load route')
@@ -289,6 +296,31 @@ export function RouteMap({ origin, destination, currentPosition, status }: Route
         if (status === 'OK' && result && directionsRenderer.current && isMountedRef.current) {
           directionsRenderer.current.setDirections(result)
           console.log('Route drawn successfully')
+          
+          // Add country borders overlay
+          if (routeData.countries_passed && routeData.countries_passed.length > 0) {
+            routeData.countries_passed.forEach(country => {
+              const countryCode = country.code.toUpperCase()
+              
+              fetch(`https://raw.githubusercontent.com/johan/world.geo.json/master/countries/${countryCode}.geo.json`)
+                .then(response => response.json())
+                .then(geoJson => {
+                  if (map && isMountedRef.current) {
+                    // @ts-ignore - Google Maps Data Layer
+                    map.data.addGeoJson(geoJson);
+                    // @ts-ignore
+                    map.data.setStyle({
+                      strokeColor: '#dc2626',
+                      strokeWeight: 2,
+                      strokeOpacity: 0.8,
+                      fillColor: '#dc2626',
+                      fillOpacity: 0.1
+                    })
+                  }
+                })
+                .catch(() => console.log('Could not load border for', country.name))
+            })
+          }
         } else if (status !== 'OK') {
           console.warn('Directions request failed:', status)
         }

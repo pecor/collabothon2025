@@ -3,14 +3,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Navbar } from '@/components/layout'
 import { 
   getOrder, 
-  getCargo, 
   getRoute, 
   getVehicles, 
   getUsers,
   assignOrder,
   manualAssignOrder,
   type Order,
-  type Cargo,
   type Route,
   type Vehicle,
   type User as ApiUser,
@@ -23,7 +21,6 @@ export function Matching() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null)
-  const [currentCargo, setCurrentCargo] = useState<Cargo | null>(null)
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [drivers, setDrivers] = useState<ApiUser[]>([])
@@ -55,11 +52,7 @@ export function Matching() {
         setVehicles(vehiclesData.filter(v => v.status === 'available'))
         setDrivers(driversData.filter(d => d.is_active))
 
-        // Fetch cargo and route details
-        if (orderData.cargo) {
-          const cargoData = await getCargo(orderData.cargo)
-          setCurrentCargo(cargoData)
-        }
+        // Fetch route details
         if (orderData.route) {
           const routeData = await getRoute(orderData.route)
           setCurrentRoute(routeData)

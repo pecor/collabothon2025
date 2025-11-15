@@ -1,6 +1,7 @@
 import { X, MapPin, User, DollarSign, Package, Calendar, Truck } from 'lucide-react'
 import { type Order as ApiOrder } from '@/lib/api'
 import { RouteMap } from './RouteMap'
+import { useState } from 'react'
 
 interface OrderModalProps {
   order: ApiOrder
@@ -8,7 +9,14 @@ interface OrderModalProps {
   onClose: () => void
 }
 
+interface RouteData {
+  cities?: Array<{ name: string; country: string }>
+  waypoints?: Array<{ lat: number; lng: number }>
+}
+
 export function OrderModal({ order, isOpen, onClose }: OrderModalProps) {
+  const [routeData, setRouteData] = useState<RouteData | null>(null)
+
   if (!isOpen) return null
 
   const getStatusColor = (status: string) => {
@@ -89,6 +97,7 @@ export function OrderModal({ order, isOpen, onClose }: OrderModalProps) {
                 destination={order.route_info?.split(' → ')[1] || 'Berlin'}
                 currentPosition={null}
                 status={order.status}
+                onRouteDataLoaded={(data) => setRouteData(data)}
               />
 
               {/* Order Details Grid */}
@@ -192,20 +201,95 @@ export function OrderModal({ order, isOpen, onClose }: OrderModalProps) {
                 </div>
               </div>
 
-              {/* Tracker Info - TODO */}
+              {/* Tracker Info - Mock Live Tracking */}
               <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <MapPin className="h-5 w-5 text-purple-500" />
                   <h3 className="text-white font-semibold text-lg">Live Tracking</h3>
+                  <span className="ml-auto flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-green-400 text-xs font-medium">LIVE</span>
+                  </span>
                 </div>
-                <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-4 text-center">
-                  <p className="text-zinc-400 text-sm">
-                    TODO: Display real-time tracker data from <span className="text-red-400 font-mono">/trackers/</span> endpoint
-                  </p>
-                  <p className="text-zinc-500 text-xs mt-2">
-                    (Current location, distance to destination, estimated arrival time)
-                  </p>
+                
+                {/* Current Location */}
+                <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-purple-900/30 p-2 rounded-lg">
+                      <MapPin className="h-5 w-5 text-purple-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-white font-semibold mb-1">Current Location</h4>
+                      <p className="text-zinc-300 text-sm mb-2">
+                        {(() => {
+                          const origin = order.route_info?.split(' → ')[0] || 'Warsaw'
+                          const destination = order.route_info?.split(' → ')[1] || 'Berlin'
+                          
+                          if (order.status === 'new') return `Waiting at ${origin}`
+                          if (order.status === 'completed') return `Delivered in ${destination}`
+                          
+                          // Use actual cities from Google Maps API
+                          if (routeData?.cities && routeData.cities.length > 0) {
+                            const cityIndex = order.id % routeData.cities.length
+                            const city = routeData.cities[cityIndex]
+                            return `Near ${city.name}, ${city.country}`
+                          }
+                          
+                          // Fallback if API data not loaded yet
+                          return `En route to ${destination}`
+                        })()}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-zinc-400">
+                        <span>Last update: {new Date(Date.now() - Math.random() * 600000).toLocaleTimeString()}</span>
+                        <span>Speed: {Math.floor(Math.random() * 30 + 70)} km/h</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Progress Stats */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3 text-center">
+                    <p className="text-zinc-400 text-xs mb-1">Distance Covered</p>
+                    <p className="text-white font-bold text-lg">
+                      {order.status === 'completed' ? '100%' : 
+                       order.status === 'in_transit' ? `${Math.floor((order.id * 17 + 30) % 50 + 25)}%` : 
+                       order.status === 'assigned' ? `${Math.floor((order.id * 13) % 15 + 5)}%` :
+                       '0%'}
+                    </p>
+                  </div>
+                  <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3 text-center">
+                    <p className="text-zinc-400 text-xs mb-1">ETA</p>
+                    <p className="text-white font-bold text-lg">
+                      {order.status === 'completed' ? 'Delivered' : 
+                       order.status === 'in_transit' ? `${Math.floor((order.id * 11 % 5) + 2)}h ${Math.floor((order.id * 7) % 60)}m` : 
+                       order.status === 'assigned' ? `${Math.floor((order.id * 13 % 8) + 4)}h` :
+                       'Pending'}
+                    </p>
+                  </div>
+                  <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3 text-center">
+                    <p className="text-zinc-400 text-xs mb-1">Stops</p>
+                    <p className="text-white font-bold text-lg">
+                      {Math.floor(order.id % 3) + (order.status === 'in_transit' ? 1 : 0)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                {(order.status === 'in_transit' || order.status === 'assigned') && (
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
+                      <span>{order.route_info?.split(' → ')[0]}</span>
+                      <span>{order.route_info?.split(' → ')[1]}</span>
+                    </div>
+                    <div className="h-2 bg-zinc-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
+                        style={{ width: `${order.status === 'in_transit' ? Math.floor((order.id * 17 + 30) % 50 + 25) : Math.floor((order.id * 13) % 15 + 5)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

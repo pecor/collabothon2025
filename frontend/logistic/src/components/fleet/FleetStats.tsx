@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Truck, Users, TrendingUp, CheckCircle2 } from 'lucide-react'
+import { Truck, Users, TrendingUp, Hammer } from 'lucide-react'
 
 interface FleetStatsProps {
   stats: {
@@ -52,11 +52,11 @@ export function FleetStats({ stats }: FleetStatsProps) {
             <CardHeader>
               <div className="flex items-center gap-3">
                 <div className="bg-zinc-800 p-2 rounded-lg">
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <Hammer className="h-5 w-5 text-yellow-500" />
                 </div>
                 <div>
-                  <CardDescription className="text-zinc-500 text-xs">Matches</CardDescription>
-                  <CardTitle className="text-white text-2xl">{stats.matchesFound}</CardTitle>
+                  <CardDescription className="text-zinc-500 text-xs">Maitenance</CardDescription>
+                  <CardTitle className="text-white text-2xl">3</CardTitle>
                 </div>
               </div>
             </CardHeader>
