@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button'
-import { Truck } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 export function Navbar() {
