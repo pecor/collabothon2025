@@ -1542,8 +1542,17 @@ class TransportLawViewSet(viewsets.ReadOnlyModelViewSet):
 @api_view(['POST'])
 def calculate_route(request):
     """
-    Calculate route between two addresses using Google Maps API
-    Returns distance, estimated time, and countries/cities passed through
+    Calculate route between two addresses using Google Maps API.
+    Returns distance, estimated time, countries/cities passed through, and AI-analyzed transport regulations.
+    
+    The endpoint now includes AI analysis of transport regulations for each country on the route,
+    providing critical requirements like:
+    - Hotel/rest requirements for drivers
+    - Weekend driving bans
+    - Required certificates (A1, posting declarations)
+    - Toll system requirements
+    - Winter tire requirements
+    - Special warnings and restrictions
     """
     serializer = RouteCalculationSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -1697,6 +1706,15 @@ def calculate_route(request):
         origin_formatted = origin_geocode[0].get('formatted_address', origin)
         dest_formatted = dest_geocode[0].get('formatted_address', destination)
         
+        # Analyze transport regulations for countries on route using AI
+        from .ai_extraction import analyze_route_regulations
+        countries_codes_list = [c['code'] for c in countries_info]
+        regulations_analysis = analyze_route_regulations(
+            countries_codes=countries_codes_list,
+            distance_km=distance_km,
+            estimated_time_hours=duration_hours
+        )
+        
         return Response({
             'origin': {
                 'address': origin,
@@ -1737,6 +1755,12 @@ def calculate_route(request):
                 'avoid_tolls': avoid_tolls,
                 'avoid_highways': avoid_highways,
                 'avoid_ferries': avoid_ferries
+            },
+            'transport_regulations': {
+                'analysis_status': 'success' if regulations_analysis.get('success') else 'partial',
+                'countries_analyzed': regulations_analysis.get('countries_analyzed', 0),
+                'regulations': regulations_analysis.get('regulations', []),
+                'error': regulations_analysis.get('error') if not regulations_analysis.get('success') else None
             }
         })
         
