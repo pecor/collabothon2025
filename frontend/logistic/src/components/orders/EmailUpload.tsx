@@ -325,37 +325,37 @@ export function EmailUpload() {
             <div className="grid md:grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-zinc-500">Cargo name:</span>
-                <p className="text-white font-medium">{extractedData.cargo_name}</p>
+                <p className="text-white font-medium">{extractedData.cargo_name || 'Not found'}</p>
               </div>
               <div>
                 <span className="text-zinc-500">Type:</span>
-                <p className="text-white font-medium">{extractedData.cargo_type}</p>
+                <p className="text-white font-medium">{extractedData.cargo_type || 'Not found'}</p>
               </div>
               <div>
                 <span className="text-zinc-500">Weight:</span>
-                <p className="text-white font-medium">{extractedData.weight} kg</p>
+                <p className="text-white font-medium">{extractedData.weight ? `${extractedData.weight} kg` : 'Not found'}</p>
               </div>
               <div>
                 <span className="text-zinc-500">Temperature:</span>
-                <p className="text-white font-medium">{extractedData.temperature}</p>
+                <p className="text-white font-medium">{extractedData.temperature || 'Not found'}</p>
               </div>
               <div>
                 <span className="text-zinc-500">Loading address:</span>
-                <p className="text-white font-medium">{extractedData.loading_address || 'Not provided'}</p>
+                <p className="text-white font-medium">{extractedData.loading_address || 'Not found'}</p>
               </div>
               <div>
                 <span className="text-zinc-500">Unloading address:</span>
-                <p className="text-white font-medium">{extractedData.unloading_address || 'Not provided'}</p>
+                <p className="text-white font-medium">{extractedData.unloading_address || 'Not found'}</p>
               </div>
               <div>
                 <span className="text-zinc-500">Loading date:</span>
                 <p className="text-white font-medium">
-                  {extractedData.loading_date ? new Date(extractedData.loading_date).toLocaleDateString() : 'Not provided'}
+                  {extractedData.loading_date ? new Date(extractedData.loading_date).toLocaleDateString() : 'Not found'}
                 </p>
               </div>
               <div>
                 <span className="text-zinc-500">Special requirements:</span>
-                <p className="text-white font-medium">{extractedData.special_requirements}</p>
+                <p className="text-white font-medium">{extractedData.special_requirements || 'Not found'}</p>
               </div>
               <div>
                 <span className="text-zinc-500">ADR:</span>
@@ -363,7 +363,7 @@ export function EmailUpload() {
               </div>
               <div>
                 <span className="text-zinc-500">Vehicle type:</span>
-                <p className="text-white font-medium">{extractedData.vehicle_type}</p>
+                <p className="text-white font-medium">{extractedData.vehicle_type || 'Not found'}</p>
               </div>
             </div>
 

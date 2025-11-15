@@ -66,7 +66,12 @@ def extract_order_data_from_email(email_content: str) -> Dict[str, Any]:
     options = get_available_options()
     
     prompt = f"""Analyze the following transport order email and extract structured data.
-You MUST choose values EXACTLY as they appear in the available options provided below. Do not modify or create variations.
+
+CRITICAL RULES:
+1. ONLY extract information that is EXPLICITLY stated in the email
+2. If information is NOT clearly mentioned, use null for that field
+3. DO NOT guess, assume, or invent any values
+4. You MUST choose values EXACTLY as they appear in the available options provided below
 
 AVAILABLE OPTIONS (choose EXACTLY as shown):
 - Cargo Types: {', '.join(options['cargo_types'])}
@@ -74,38 +79,40 @@ AVAILABLE OPTIONS (choose EXACTLY as shown):
 - Special Requirements: {', '.join(options['special_requirements'])}
 - Vehicle Types: {', '.join(options['vehicle_types'])}
 
-Return ONLY a JSON object with these exact fields (use null if information is not found):
+Return ONLY a JSON object with these exact fields (use null if information is NOT explicitly stated):
 
 {{
-  "cargo_name": "string - brief description of cargo (e.g., '50 Euro Pallets')",
-  "cargo_type": "string - MUST be EXACTLY one of the Cargo Types listed above (e.g., 'Pallets' not 'Euro Pallets')",
-  "weight": number - weight in KILOGRAMS (if weight is in tons, multiply by 1000. E.g., 12 tons = 12000 kg),
-  "temperature": "string - MUST be EXACTLY one of the Temperature options above (e.g., '2 to 8' not '2-8°C')",
-  "special_requirements": "string - MUST be EXACTLY one of the Special Requirements above (e.g., 'ADR' not 'ADR required')",
-  "loading_address": "string - pickup location city",
-  "unloading_address": "string - delivery location city",
-  "loading_date": "string - YYYY-MM-DD format",
-  "unloading_date": "string - YYYY-MM-DD format or null",
-  "adr_required": boolean - true if ADR/hazardous materials mentioned,
-  "vehicle_type": "string - MUST be EXACTLY one of the Vehicle Types above"
+  "cargo_name": "string - ONLY if cargo description is explicitly mentioned, otherwise null",
+  "cargo_type": "string - MUST be EXACTLY one of the Cargo Types listed above, or null if not mentioned",
+  "weight": number - weight in KILOGRAMS ONLY if explicitly stated (if in tons, multiply by 1000), or null if not mentioned,
+  "temperature": "string - MUST be EXACTLY one of the Temperature options above, or null if not mentioned",
+  "special_requirements": "string - MUST be EXACTLY one of the Special Requirements above, or null if not mentioned",
+  "loading_address": "string - pickup location city ONLY if explicitly stated, otherwise null",
+  "unloading_address": "string - delivery location city ONLY if explicitly stated, otherwise null",
+  "loading_date": "string - YYYY-MM-DD format ONLY if date is explicitly stated, otherwise null",
+  "unloading_date": "string - YYYY-MM-DD format ONLY if date is explicitly stated, otherwise null",
+  "adr_required": boolean - true ONLY if ADR/hazardous materials are explicitly mentioned, otherwise false,
+  "vehicle_type": "string - MUST be EXACTLY one of the Vehicle Types above, or null if not mentioned"
 }}
 
-CRITICAL MATCHING RULES:
-- Temperature: If email says "2-8°C" or "Refrigerated (2-8)", use "2 to 8" from options
-- Temperature: If email says "Refrigerated" without specific range, use "Refrigerated" from options
-- Temperature: If email says "Ambient" or no temperature, use "Ambient"
-- Special Requirements: If email says "ADR required", use "ADR" from options
-- Special Requirements: If email says "Forklift needed", use "Forklift" from options
-- Special Requirements: If no special requirements, use "None"
-- Cargo Type: "Pallets" for any pallet type, "Food Products" for food, "Pharmaceuticals" for medicine
-- Vehicle Type: "Refrigerated" for cold transport, "Box" for box truck, "Cargo" for standard cargo
-- Always convert weight to kilograms: tons × 1000
-- Extract only city names for addresses, not full addresses
+MATCHING RULES (only apply if information exists):
+- Temperature: "2-8°C" or "Refrigerated (2-8)" → "2 to 8"
+- Temperature: "Refrigerated" without range → "Refrigerated"
+- Temperature: Not mentioned → null (NOT "Ambient")
+- Special Requirements: "ADR required" → "ADR"
+- Special Requirements: "Forklift needed" → "Forklift"
+- Special Requirements: Not mentioned → null (NOT "None")
+- Cargo Type: Match to closest option from list, or null if unclear
+- Vehicle Type: Match to closest option from list, or null if not mentioned
+- Weight: Convert tons to kg (tons × 1000), or null if not stated
+- Addresses: Extract ONLY city names, or null if not stated
+
+DO NOT MAKE UP OR ASSUME ANY VALUES. If in doubt, use null.
 
 Email content:
 {email_content}
 
-Return ONLY the JSON object with values matching EXACTLY the options provided above."""
+Return ONLY the JSON object. Use null for any field that is not explicitly mentioned in the email."""
 
     try:
         response = requests.post(
@@ -129,15 +136,26 @@ Return ONLY the JSON object with values matching EXACTLY the options provided ab
         ai_response = result.get('choices', [{}])[0].get('message', {}).get('content', '{}')
         
         # Try to parse JSON from the response
-        # Sometimes AI includes markdown code blocks, so we clean that
+        # Sometimes AI includes markdown code blocks or extra text, so we clean that
         json_str = ai_response.strip()
+        
+        # Remove markdown code blocks
         if json_str.startswith('```json'):
             json_str = json_str[7:]
-        if json_str.startswith('```'):
+        elif json_str.startswith('```'):
             json_str = json_str[3:]
         if json_str.endswith('```'):
             json_str = json_str[:-3]
+        
         json_str = json_str.strip()
+        
+        # Try to extract JSON object if there's extra text
+        # Look for the first { and last }
+        start_idx = json_str.find('{')
+        end_idx = json_str.rfind('}')
+        
+        if start_idx != -1 and end_idx != -1 and start_idx < end_idx:
+            json_str = json_str[start_idx:end_idx + 1]
         
         extracted_data = json.loads(json_str)
         
@@ -187,19 +205,19 @@ Return ONLY the JSON object with values matching EXACTLY the options provided ab
             options['vehicle_types']
         )
         
-        # Validate and clean the data
+        # Validate and clean the data - keep nulls if AI didn't find information
         cleaned_data = {
-            'cargo_name': extracted_data.get('cargo_name') or 'Unknown Cargo',
-            'cargo_type': mapped_cargo_type or 'General Cargo',
-            'weight': extracted_data.get('weight') or 0,
-            'temperature': mapped_temperature or 'Ambient',
-            'special_requirements': mapped_special_req or 'None',
-            'loading_address': extracted_data.get('loading_address') or '',
-            'unloading_address': extracted_data.get('unloading_address') or '',
+            'cargo_name': extracted_data.get('cargo_name') or None,
+            'cargo_type': mapped_cargo_type if mapped_cargo_type and extracted_data.get('cargo_type') else None,
+            'weight': extracted_data.get('weight') if extracted_data.get('weight') is not None else None,
+            'temperature': mapped_temperature if mapped_temperature and extracted_data.get('temperature') else None,
+            'special_requirements': mapped_special_req if mapped_special_req and extracted_data.get('special_requirements') else None,
+            'loading_address': extracted_data.get('loading_address') or None,
+            'unloading_address': extracted_data.get('unloading_address') or None,
             'loading_date': extracted_data.get('loading_date') or None,
             'unloading_date': extracted_data.get('unloading_date') or None,
             'adr_required': extracted_data.get('adr_required', False),
-            'vehicle_type': mapped_vehicle_type or 'Cargo',
+            'vehicle_type': mapped_vehicle_type if mapped_vehicle_type and extracted_data.get('vehicle_type') else None,
             'success': True,
             'raw_ai_response': ai_response
         }
