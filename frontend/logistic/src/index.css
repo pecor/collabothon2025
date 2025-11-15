@@ -119,6 +119,8 @@
     padding: 0;
     width: 100%;
     overflow-x: hidden;
+    background: #0a0a0a !important;
+    color-scheme: dark;
   }
   body {
     @apply bg-background text-foreground;
