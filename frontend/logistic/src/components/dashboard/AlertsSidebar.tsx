@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertTriangle, CheckCircle2, BarChart3 } from 'lucide-react'
+import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 
 interface Alert {
   type: 'error' | 'warning' | 'info'
