@@ -19,6 +19,7 @@ urlpatterns = [
     path('orders/extract-from-email/', views.extract_order_from_email, name='extract_order_from_email'),
     path('health/', views.health_check, name='health_check'),
     path('dashboard/stats/', views.dashboard_stats, name='dashboard_stats'),
+    path('orders/fetch-latest-email/', views.fetch_and_extract_latest_email, name='fetch_and_extract_latest_email'),
     # Router URLs (must be last to catch remaining routes)
     path('', include(router.urls)),
 ]

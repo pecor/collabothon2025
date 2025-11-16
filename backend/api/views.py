@@ -6,6 +6,10 @@ from datetime import datetime, timedelta
 import googlemaps
 from django.conf import settings
 from drf_spectacular.utils import extend_schema, OpenApiExample
+import os
+import imaplib
+import email
+from email.header import decode_header
 from .models import User, Vehicle, Route, Cargo, Order, Tracker, Holiday, TransportLaw
 from .serializers import (
     UserSerializer, VehicleSerializer, RouteSerializer, CargoSerializer,
@@ -1858,3 +1862,174 @@ def extract_order_from_email(request):
         },
         'raw_ai_response': extracted_data.get('raw_ai_response', '') if settings.DEBUG else None
     })
+
+@api_view(['GET', 'POST'])
+def fetch_and_extract_latest_email(request):
+    """
+    Connect to IMAP server, fetch the latest email, and extract order data using AI
+    
+    Uses environment variables for IMAP configuration:
+    - IMAP_HOST: IMAP server hostname (e.g., 'imap.gmail.com')
+    - IMAP_PORT: IMAP server port (default: 993 for SSL, 143 for non-SSL)
+    - IMAP_USERNAME: Email username
+    - IMAP_PASSWORD: Email password or app password
+    - IMAP_USE_SSL: Use SSL/TLS (default: True)
+    - IMAP_MAILBOX: Mailbox to check (default: 'INBOX')
+    
+    Returns:
+    {
+        "success": true,
+        "email_subject": "...",
+        "email_from": "...",
+        "email_date": "...",
+        "data": {
+            "cargo_name": "...",
+            "cargo_type": "...",
+            ...
+        }
+    }
+    """
+    from .ai_extraction import extract_order_data_from_email
+    
+    imap_host = os.getenv('IMAP_HOST', '')
+    imap_port = int(os.getenv('IMAP_PORT', '993'))
+    imap_username = os.getenv('IMAP_USERNAME', '')
+    imap_password = os.getenv('IMAP_PASSWORD', '')
+    imap_use_ssl = os.getenv('IMAP_USE_SSL', 'True').lower() == 'true'
+    imap_mailbox = os.getenv('IMAP_MAILBOX', 'INBOX')
+    
+    if not imap_host or not imap_username or not imap_password:
+        return Response({
+            'success': False,
+            'error': 'IMAP configuration missing. Please set IMAP_HOST, IMAP_USERNAME, and IMAP_PASSWORD environment variables.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    mail = None
+    try:
+        if imap_use_ssl:
+            mail = imaplib.IMAP4_SSL(imap_host, imap_port)
+        else:
+            mail = imaplib.IMAP4(imap_host, imap_port)
+        
+        mail.login(imap_username, imap_password)
+        mail.select(imap_mailbox)
+        
+        status_code, messages = mail.search(None, 'ALL')
+        if status_code != 'OK':
+            return Response({
+                'success': False,
+                'error': f'Failed to search mailbox: {messages}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        email_ids = messages[0].split()
+        if not email_ids:
+            return Response({
+                'success': False,
+                'error': 'No emails found in mailbox'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        latest_email_id = email_ids[-1]
+        status_code, msg_data = mail.fetch(latest_email_id, '(RFC822)')
+        
+        if status_code != 'OK':
+            return Response({
+                'success': False,
+                'error': f'Failed to fetch email: {msg_data}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        email_body = msg_data[0][1]
+        email_message = email.message_from_bytes(email_body)
+        
+        subject = decode_header(email_message["Subject"])[0][0]
+        if isinstance(subject, bytes):
+            subject = subject.decode()
+        
+        from_addr = decode_header(email_message["From"])[0][0]
+        if isinstance(from_addr, bytes):
+            from_addr = from_addr.decode()
+        
+        email_date = email_message["Date"]
+        
+        email_content = ""
+        if email_message.is_multipart():
+            for part in email_message.walk():
+                content_type = part.get_content_type()
+                content_disposition = str(part.get("Content-Disposition"))
+                
+                if content_type == "text/plain" and "attachment" not in content_disposition:
+                    try:
+                        body = part.get_payload(decode=True)
+                        charset = part.get_content_charset() or 'utf-8'
+                        email_content = body.decode(charset)
+                        break
+                    except:
+                        pass
+                elif content_type == "text/html" and "attachment" not in content_disposition and not email_content:
+                    try:
+                        body = part.get_payload(decode=True)
+                        charset = part.get_content_charset() or 'utf-8'
+                        email_content = body.decode(charset)
+                    except:
+                        pass
+        else:
+            try:
+                body = email_message.get_payload(decode=True)
+                charset = email_message.get_content_charset() or 'utf-8'
+                email_content = body.decode(charset)
+            except:
+                email_content = str(email_message.get_payload())
+        
+        if not email_content or len(email_content.strip()) < 10:
+            return Response({
+                'success': False,
+                'error': 'Email content is empty or too short',
+                'email_subject': subject,
+                'email_from': from_addr,
+                'email_date': email_date
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        extracted_data = extract_order_data_from_email(email_content)
+        
+        if not extracted_data.get('success', True):
+            return Response({
+                'success': False,
+                'error': extracted_data.get('error', 'Failed to extract data'),
+                'email_subject': subject,
+                'email_from': from_addr,
+                'email_date': email_date,
+                'data': {
+                    k: v for k, v in extracted_data.items() 
+                    if k not in ['success', 'error', 'raw_response', 'raw_ai_response']
+                }
+            }, status=status.HTTP_200_OK)
+        
+        return Response({
+            'success': True,
+            'email_subject': subject,
+            'email_from': from_addr,
+            'email_date': email_date,
+            'data': {
+                k: v for k, v in extracted_data.items() 
+                if k not in ['success', 'error', 'raw_response', 'raw_ai_response']
+            },
+            'raw_ai_response': extracted_data.get('raw_ai_response', '') if settings.DEBUG else None
+        })
+        
+    except imaplib.IMAP4.error as e:
+        return Response({
+            'success': False,
+            'error': f'IMAP error: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': f'Unexpected error: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    finally:
+        if mail:
+            try:
+                mail.close()
+                mail.logout()
+            except:
+                pass
+
