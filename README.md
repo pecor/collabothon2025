@@ -1,4 +1,9 @@
 # #RedHatCollabothonChallange
+AlfaGuys
+Kacper Kleczaj
+Mateusz Jędrzejczak
+Filip Pecyna
+
 ## TruckAI Backend (Django REST) – Technical README
 
 Purpose: AI-assisted transport operations — order intake, route calculation, legal checks, assignment, and profitability.
