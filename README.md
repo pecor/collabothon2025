@@ -1,351 +1,97 @@
-# TruckAI - Collabothon 2025
+# #RedHatCollabothonChallange
+## TruckAI Backend (Django REST) – Technical README
 
-Inteligentny system doboru zleceń transportowych z wykorzystaniem AI do optymalizacji tras i przypisywania kierowców.
+Purpose: AI-assisted transport operations — order intake, route calculation, legal checks, assignment, and profitability.
 
-## 🚀 Główne funkcjonalności
+Stack: Django 4.x, Django REST Framework, drf-spectacular (OpenAPI), PostgreSQL, googlemaps (routes), deployed on OpenShift.
 
-### 1. 🤖 Analiza AI tras z automatycznym przypisaniem kierowców
+### Architecture
 
-System automatycznie analizuje zlecenia i przypisuje najbliższego dostępnego kierowcę, minimalizując koszty transportu.
+- Backend service in `backend/` with the API app in `backend/api/`
+- REST endpoints in `api/views.py` using `ModelViewSet` plus custom `@action`s
+- Serialization in `api/serializers.py`
+- Domain models in `api/models.py`
+- AI helpers:
+  - `api/ai_matching.py`: driver scoring and ranking
+  - `api/ai_extraction.py`: extracting structured order data from emails
+- Fixtures and seed: `api/management/commands/import_fixtures.py`
+- API docs (OpenAPI/Swagger): `/api/schema/swagger-ui/`
 
-**Endpoint:** `POST /api/orders/{id}/assign/`
+### Data Model
 
-**Jak działa:**
-1. **Analiza zlecenia** - System sprawdza wymagania zlecenia (typ towaru, waga, temperatura, wymagania specjalne)
-2. **Wybór najbliższego kierowcy** - AI wybiera kierowcę na podstawie:
-   - Lokalizacji (kraj i miasto) - preferuje kierowców najbliżej miejsca załadunku
-   - Dostępności w dniu zlecenia
-   - Uprawnień (licencje C, C+E, ADR, certyfikaty wózków widłowych)
-   - Przypisanej ciężarówki (preferuje kierowców z już przypisanym pojazdem)
-3. **Minimalizacja kosztów** - System wybiera kierowcę najbliżej trasy, aby zminimalizować:
-   - Koszty dojazdu do miejsca załadunku
-   - Czas oczekiwania
-   - Puste przebiegi
+- `User` (Driver/Operator)
+  - Availability/location: `is_active`, `current_country`, `current_city`
+  - Licenses/certs: `license_c`, `license_ce`, `license_adr`, `forklift_certified`
+  - Assigned asset: `current_vehicle` (FK → `Vehicle`)
+- `Vehicle`
+  - Type/capacity: `type` (`refrigerated|box|cargo`), `capacity_weight`, `capacity_volume`, `has_forklift`
+  - Assignments: `current_driver` (FK → `User`)
+  - Status: `available|in_transit|maintenance`
+- `Route`
+  - `origin`, `destination`, `distance_km`, `estimated_time`, `holiday_blocked`, `status`
+- `Cargo`
+  - Physical: `length|width|height|weight`
+  - Requirements: `requires_cold|requires_box|forklift_needed|license_*_required`
+- `Order`
+  - Relations: `user` (client), `cargo`, `route`, optional `vehicle`, `driver`
+  - Lifecycle: `status` (`new|assigned|in_transit|completed|cancelled`)
+  - Dates: `creation_date`, `planned_date`, `loading_date`, `unloading_date`
+  - Route shadow fields: `origin`, `destination`
+  - Commercials: `cost`, `revenue`, `profit` (persisted)
+- `Tracker` (vehicle live-tracking placeholder)
+- `Holiday`, `TransportLaw` (constraints data)
 
-**Przykład odpowiedzi:**
-```json
-{
-  "order_id": 1,
-  "assigned_vehicle": {
-    "id": 5,
-    "registration_no": "WX56789",
-    "type": "refrigerated"
-  },
-  "assigned_driver": {
-    "id": 3,
-    "name": "Anna Wiśniewska",
-    "current_country": "Poland",
-    "current_city": "Warsaw"
-  },
-  "estimated_profit": 1250.50,
-  "assignment_reasons": [
-    "Vehicle WX56789 meets all requirements",
-    "Driver Anna Wiśniewska has required licenses",
-    "Driver located in origin country (Poland)",
-    "Both available on 2025-12-01"
-  ]
-}
-```
+### AI Components
 
-### 2. ⚖️ Analiza prawa transportowego - kto może jechać
+#### Driver Matching (`api/ai_matching.py`)
 
-System automatycznie sprawdza przepisy transportowe i wyświetla listę wszystkich kierowców, którzy mogą wykonać zlecenie.
+Input: `Order` + compatible `User` queryset.
 
-**Funkcje analizy prawnej:**
-- **Sprawdzanie uprawnień kierowców:**
-  - Licencja C (kategoria podstawowa)
-  - Licencja C+E (z przyczepą)
-  - Certyfikat ADR (materiały niebezpieczne)
-  - Certyfikat wózków widłowych
-- **Walidacja świąt i zakazów:**
-  - Sprawdzanie kalendarza świąt w krajach tranzytowych
-  - Weryfikacja zakazów ruchu dla kategorii pojazdów
-  - Ostrzeżenia o ograniczeniach prawnych
-- **Analiza przepisów krajowych:**
-  - Sprawdzanie przepisów transportowych dla każdego kraju na trasie
-  - Weryfikacja wymagań dotyczących dokumentów
-  - Walidacja limitów czasu pracy
+Output: ranked scoring list with reasons and optional distance score.
 
-**Endpoint do sprawdzania dostępnych kierowców:**
-```
-GET /api/users/available_drivers/?date=2025-12-01&license_c=true&license_adr=true&country=Poland
-```
+Criteria:
+- License compliance: `license_c|license_ce|license_adr`
+- Special needs: `forklift_certified`, vehicle type compatibility
+- Availability on `planned_date` (excludes already assigned)
+- Proximity heuristic: prefer same country/city as `origin`
+- Preference: drivers with `current_vehicle`
 
-### 3. 📋 Lista truckerów w kolejności od najbliższego do najdalszego
+Assignment flow (two-stage):
+- Preview only (no side effects): `GET /api/orders/{id}/preview_assignment/` returns top candidates, `assigned_driver/assigned_vehicle` suggestion, reasons
+- Confirm (side effects): `POST /api/orders/{id}/assign/` persists `driver`, `vehicle`, sets `status=assigned`
 
-System wyświetla wszystkich dostępnych kierowców, którzy spełniają wymagania zlecenia, posortowanych według odległości od miejsca załadunku.
+Granite VLLM receives data and based on it model chooses the best candidate.
 
-**Sortowanie kierowców:**
-1. **Najbliżsi geograficznie** - kierowcy w tym samym kraju/mieście co miejsce załadunku
-2. **Z przypisaną ciężarówką** - preferowani kierowcy z już przypisanym pojazdem
-3. **Z odpowiednimi uprawnieniami** - kierowcy spełniający wszystkie wymagania prawne
-4. **Dostępni w terminie** - kierowcy wolni w dniu zlecenia
+#### Email Extraction (`api/ai_extraction.py`)
 
-**Endpoint:**
-```
-GET /api/orders/{id}/assign/
-```
+Transforms raw email text into structured order fields.
 
-**Odpowiedź zawiera:**
-- Listę wszystkich kompatybilnych kierowców
-- Odległość od miejsca załadunku
-- Score kompatybilności (0-100%)
-- Szczegóły uprawnień każdego kierowcy
-- Informacje o przypisanej ciężarówce
+Endpoint: `POST /api/orders/extract-from-email/` with `email_body`.
 
-### 4. 💰 Analiza i walidacja ceny zlecenia
+Data is sent to Granite VLLM and added to orders.
 
-System automatycznie analizuje czy podana cena w zleceniu jest poprawna i opłacalna. trzeba zrobic csv na podstawie ktorej bedzie to liczyl
+### Financials
 
-**Endpoint:** `GET /api/orders/{id}/validate_price/`
+Canonical formula:
+- `cost = (distance_km * 0.8 + (distance_km/100)*30*6.15) * 1.1`
+- `revenue = cost * 1.3`
+- `profit = revenue - cost`
 
-**Funkcje analizy ceny:**
-- **Porównanie z rynkowymi stawkami:**
-  - Analiza średnich stawek za km dla danego typu trasy
-  - Porównanie z historycznymi zleceniami o podobnych parametrach
-  - Uwzględnienie typu pojazdu (refrigerated, box, cargo)
-- **Kalkulacja rzeczywistych kosztów:**
-  - Koszty paliwa (na podstawie dystansu i typu pojazdu)
-  - Koszty kierowcy (stawka dzienna)
-  - Koszty utrzymania pojazdu
-  - Koszty dodatkowe (ADR, chłodnia, wózki widłowe)
-- **Walidacja marży:**
-  - Sprawdzenie czy marża jest powyżej minimum (np. 15%)
-  - Ostrzeżenia o niskiej rentowności
-  - Rekomendacje optymalnej ceny
-- **Analiza rentowności:**
-  - Obliczenie zysku (revenue - cost)
-  - Procent marży zysku
-  - Porównanie z benchmarkami branżowymi
+Enforcement in codebase:
+- Serializer-level compute on create/update (`OrderCreateSerializer.create/update`); fields are read-only from clients to avoid drift
+- Explicit recalculation endpoint: `POST /api/orders/{id}/calculate_financials/` recomputes and persists from current route
 
-**Przykład odpowiedzi:**
-```json
-{
-  "order_id": 1,
-  "provided_revenue": 1800.00,
-  "estimated_costs": {
-    "fuel": 456.00,
-    "driver": 500.00,
-    "maintenance": 114.00,
-    "additional": 50.00,
-    "total": 1120.00
-  },
-  "estimated_profit": 680.00,
-  "profit_margin_percent": 37.78,
-  "validation_status": "valid",
-  "price_assessment": {
-    "market_average": 2000.00,
-    "price_difference_percent": -10.0,
-    "recommendation": "price_below_market",
-    "suggested_price": 2100.00
-  },
-  "warnings": [],
-  "recommendations": [
-    "Cena jest 10% poniżej średniej rynkowej",
-    "Rekomendowana cena: 2100 PLN dla lepszej marży"
-  ]
-}
-```
+Defensive defaults: If route/distance is absent during create/update, values are set to `0.0` to avoid nulls.
 
-**Statusy walidacji:**
-- `valid` - Cena jest poprawna i opłacalna
-- `low_margin` - Marża jest poniżej rekomendowanego minimum
-- `below_market` - Cena jest poniżej średniej rynkowej
-- `unprofitable` - Zlecenie jest nierentowne (ujemny zysk)
+### Legal/Constraints Engine
 
-### 5. 📧 Import zleceń z maili
+- `Holiday` model with per-country flags (e.g., `license_*_allowed`) used in assignment to warn/block when `route.holiday_blocked`
+- `TransportLaw` model stores per-country restrictions (weight/size/tolls/emissions, etc.); serves as a baseline for extended enforcement
 
-System umożliwia automatyczne dodawanie zleceń do bazy danych na podstawie maili.
+### API Documentation
 
-**Funkcje:**
-- **Upload maila** - możliwość przesłania pliku email (.eml, .msg) lub wklejenia treści
-- **Automatyczna ekstrakcja danych przez AI:**
-  - Miejsce załadunku i rozładunku
-  - Data załadunku i rozładunku
-  - Typ towaru, waga, wymiary
-  - Wymagania specjalne (temperatura, ADR, wózki widłowe)
-  - Informacje o kliencie
-- **Weryfikacja i edycja** - możliwość sprawdzenia i poprawienia wyekstrahowanych danych przed dodaniem do bazy
-- **Automatyczne tworzenie zlecenia** - po weryfikacji zlecenie jest automatycznie dodawane do systemu
-
-**Endpoint:**
-```
-POST /api/orders/
-Content-Type: application/json
-
-{
-  "origin": "Warsaw, Poland",
-  "destination": "Berlin, Germany",
-  "cargo": 1,
-  "route": 1,
-  "planned_date": "2025-12-01",
-  "cargo_type": "Pallets",
-  "weight": 1500,
-  "temperature": "Ambient",
-  "loading_date": "2025-12-01",
-  "unloading_date": "2025-12-03"
-}
-```
-
-## 🏗️ Struktura projektu
-
-```
-collabothon2025/
-├── backend/                    # Django REST Framework backend
-│   ├── api/
-│   │   ├── models.py          # Modele danych (User, Vehicle, Order, Route, Cargo)
-│   │   ├── views.py           # Endpointy API z logiką AI
-│   │   ├── serializers.py     # Serializery Django REST
-│   │   └── management/        # Komendy zarządzania (import fixtures)
-│   ├── config/
-│   │   └── settings.py        # Konfiguracja Django (CORS, baza danych)
-│   └── fixtures/              # Dane testowe (CSV)
-│       ├── users.csv          # Kierowcy z lokalizacją i przypisanymi ciężarówkami
-│       ├── vehicles.csv       # Pojazdy
-│       ├── orders.csv         # Zlecenia z origin/destination
-│       ├── routes.csv         # Trasy
-│       └── ...
-├── frontend/                   # React + TypeScript frontend
-│   └── logistic/
-│       └── src/
-│           ├── pages/
-│           │   ├── Home.tsx           # Strona główna
-│           │   ├── AddOrder.tsx      # Dodawanie zleceń (formularz + upload maila)
-│           │   ├── Fleet.tsx         # Flota i kierowcy
-│           │   ├── Matching.tsx      # Propozycje AI
-│           │   └── ...
-│           └── components/
-└── README.md                   # Ten plik
-```
-
-## 🎯 Kluczowe modele danych
-
-### User (Kierowca)
-- **Lokalizacja:** `current_country`, `current_city` - aktualna lokalizacja kierowcy
-- **Przypisana ciężarówka:** `current_vehicle` - ForeignKey do Vehicle
-- **Uprawnienia:** `license_c`, `license_ce`, `license_adr`, `forklift_certified`
-
-### Order (Zlecenie)
-- **Lokalizacja:** `origin`, `destination` - miejsce załadunku i rozładunku
-- **Parametry:** `cargo_type`, `weight`, `temperature`, `special_requirements`
-- **Daty:** `loading_date`, `unloading_date`, `planned_date`
-- **Finanse:** `cost`, `revenue`, `profit`
-
-### Vehicle (Pojazd)
-- **Przypisany kierowca:** `current_driver` - ForeignKey do User
-- **Parametry:** `type`, `capacity_weight`, `capacity_volume`, `has_forklift`
-
-## 🔌 Główne endpointy API
-
-### Zlecenia (Orders)
-- `GET /api/orders/` - Lista wszystkich zleceń (filtrowanie po `origin`, `destination`)
-- `POST /api/orders/` - Utworzenie nowego zlecenia
-- `POST /api/orders/{id}/assign/` - **AI przypisanie kierowcy i pojazdu**
-- `GET /api/orders/assignment_status/` - Status przypisania zleceń
-- `GET /api/orders/active/` - Aktywne zlecenia
-- `GET /api/orders/{id}/validate_price/` - **Walidacja czy podana cena w zleceniu jest poprawna**
-- `GET /api/orders/{id}/compatible_drivers/` - Lista wszystkich kompatybilnych kierowców z odległościami i scoringiem
-- `POST /api/orders/bulk_create/` - Masowe tworzenie zleceń (batch import)
-- `GET /api/orders/{id}/route_analysis/` - Szczegółowa analiza trasy z kosztami i czasem
-- `GET /api/orders/profitability_report/` - Raport rentowności wszystkich zleceń z analizą ROI
-
-### Kierowcy (Users)
-- `GET /api/users/` - Lista kierowców (filtrowanie po `country`, `city`, `vehicle_id`)
-- `GET /api/users/available_drivers/` - Dostępni kierowcy z filtrami
-- `GET /api/users/by-location/` - Kierowcy wg lokalizacji
-- `GET /api/users/by-vehicle/` - Kierowcy przypisani do pojazdu
-- `GET /api/users/{id}/statistics/` - Statystyki kierowcy
-
-### Pojazdy (Vehicles)
-- `GET /api/vehicles/` - Lista pojazdów (filtrowanie po `driver_id`, `has_driver`)
-- `GET /api/vehicles/available_vehicles/` - Dostępne pojazdy
-
-### Trasy (Routes)
-- `GET /api/routes/calculate/` - Oblicz trasę z Google Maps API
-- `POST /api/routes/optimize/` - Optymalizacja trasy (profit/time/distance)
-
-### Prawo transportowe
-- `GET /api/transport-laws/` - Przepisy transportowe wg kraju
-- `GET /api/holidays/` - Kalendarz świąt i zakazów
-
-### Analiza i raporty
-- `GET /api/orders/{id}/validate_price/` - **Walidacja ceny zlecenia** (porównanie z rynkiem, kalkulacja kosztów, analiza marży)
-- `GET /api/orders/{id}/compatible_drivers/` - **Lista kompatybilnych kierowców** (posortowana od najbliższego, z scoringiem i odległościami)
-- `POST /api/orders/bulk_create/` - **Masowe tworzenie zleceń** (batch import z CSV/JSON)
-- `GET /api/orders/{id}/route_analysis/` - **Szczegółowa analiza trasy** (koszty, czas, kraje tranzytowe, ograniczenia prawne)
-- `GET /api/orders/profitability_report/` - **Raport rentowności** (analiza ROI wszystkich zleceń, statystyki marży, najlepsze/ najgorsze zlecenia)
-
-## 🛠️ Uruchomienie
-
-### Backend (Django)
-```bash
-cd backend
-python manage.py migrate
-python manage.py import_fixtures  # Import danych testowych
-python manage.py runserver
-```
-
-Backend uruchomi się na: `http://localhost:8000`
-API dokumentacja (Swagger): `http://localhost:8000/api/schema/swagger-ui/`
-
-### Frontend (React)
-```bash
-cd frontend/logistic
-npm install
-npm run dev
-```
-
-Frontend uruchomi się na: `http://localhost:5173`
-
-## 📊 Przykładowy flow użytkownika
-
-1. **Dodanie zlecenia:**
-   - Użytkownik wypełnia formularz lub uploaduje maila
-   - System ekstrahuje dane przez AI
-   - Zlecenie jest dodawane do bazy
-
-2. **Analiza AI:**
-   - Użytkownik klika "Analizuj trasę i przypisz kierowcę"
-   - System:
-     - Sprawdza wymagania zlecenia
-     - Analizuje przepisy transportowe
-     - Znajduje wszystkich kompatybilnych kierowców
-     - Sortuje ich od najbliższego do najdalszego
-     - Wybiera najlepszego kierowcę i pojazd
-
-4. **Weryfikacja:**
-   - System wyświetla listę wszystkich dostępnych kierowców
-   - Pokazuje score kompatybilności i odległość
-   - Użytkownik może zaakceptować lub wybrać innego kierowcę
-
-5. **Przypisanie:**
-   - System przypisuje kierowcę i pojazd do zlecenia
-   - Aktualizuje status zlecenia na "assigned"
-   - Wysyła powiadomienia
-
-6. **Raporty i analityka:**
-   - System generuje raporty rentowności
-   - Analizuje efektywność tras
-   - Identyfikuje najlepsze i najgorsze zlecenia
-   - Dostarcza insights do optymalizacji cen
-
-## 🎯 Technologie
-
-- **Backend:** Django 4.x, Django REST Framework, PostgreSQL
-- **Frontend:** React 19, TypeScript, Vite, TailwindCSS 4, shadcn/ui
-- **AI/ML:** Red Hat OpenShift AI, Llama Stack, Granite OSS
-- **Maps:** Google Maps API (obliczanie tras, geocoding)
-- **Deploy:** Red Hat OpenShift (Kubernetes)
-
-## 📝 Następne kroki rozwoju
-
-- [ ] Integracja z systemem email (IMAP/POP3) do automatycznego importu
-- [ ] Rozszerzona analiza AI z machine learning do przewidywania kosztów
-- [ ] Real-time tracking pojazdów na trasie
-- [ ] Integracja z systemami płatności
-- [ ] Aplikacja mobilna dla kierowców
-- [ ] Dashboard analityczny z raportami ROI
-
-## 📄 Licencja
-
-Projekt stworzony na potrzeby Collabothon 2025.
+- OpenAPI schema: `/api/schema/`
+- Swagger UI: `/api/schema/swagger-ui/`
+- drf-spectacular notes:
+  - For `APIView` without `serializer_class`, add `@extend_schema` or migrate to `GenericAPIView`
+  - For `SerializerMethodField` returning objects, annotate with `@extend_schema_field`
