@@ -4,6 +4,7 @@ import { Mail, Upload, FileText, Sparkles, AlertCircle, CheckCircle, X, Edit } f
 import { useState, useEffect } from 'react'
 import { 
   extractOrderFromEmail, 
+  fetchLatestEmail,
   type ExtractedOrderData, 
   api,
   getCargoTypeOptions,
@@ -27,11 +28,13 @@ export function EmailUpload() {
   const [emailContent, setEmailContent] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isFetchingEmail, setIsFetchingEmail] = useState(false)
   const [extractedData, setExtractedData] = useState<ExtractedOrderData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editableData, setEditableData] = useState<EditableOrderData | null>(null)
+  const [emailInfo, setEmailInfo] = useState<{ subject: string; from: string; date: string } | null>(null)
   
   // Select options
   const [cargoTypeOptions, setCargoTypeOptions] = useState<string[]>([])
@@ -106,6 +109,34 @@ export function EmailUpload() {
   const handlePaste = () => {
     if (emailContent.trim()) {
       processEmail(emailContent)
+    }
+  }
+
+  const handleFetchLatestEmail = async () => {
+    setIsFetchingEmail(true)
+    setError(null)
+    setExtractedData(null)
+    setEmailInfo(null)
+    
+    try {
+      const result = await fetchLatestEmail()
+      
+      if (result.success && result.data) {
+        setExtractedData(result.data)
+        setEmailInfo({
+          subject: result.email_subject || 'N/A',
+          from: result.email_from || 'N/A',
+          date: result.email_date || 'N/A'
+        })
+        setSuccessMessage('Latest email fetched and processed successfully!')
+      } else {
+        setError(result.error || 'Failed to fetch latest email')
+      }
+    } catch (err: any) {
+      console.error('Fetch email error:', err)
+      setError(err.response?.data?.error || err.message || 'Failed to fetch latest email. Please check IMAP configuration.')
+    } finally {
+      setIsFetchingEmail(false)
     }
   }
 
@@ -245,6 +276,39 @@ export function EmailUpload() {
       </CardHeader>
 
       <div className="px-6 pb-6 space-y-6">
+        {/* Fetch Latest Email Button */}
+        <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-6">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
+                <Mail className="h-5 w-5 text-blue-400" />
+                Fetch Latest Email from Mailbox
+              </h3>
+              <p className="text-zinc-400 text-sm">
+                Automatically fetch and process the newest email from configured IMAP mailbox
+              </p>
+            </div>
+            <Button
+              onClick={handleFetchLatestEmail}
+              disabled={isFetchingEmail || isProcessing}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              size="lg"
+            >
+              {isFetchingEmail ? (
+                <>
+                  <Sparkles className="h-5 w-5 mr-2 animate-spin" />
+                  Fetching...
+                </>
+              ) : (
+                <>
+                  <Mail className="h-5 w-5 mr-2" />
+                  Fetch Latest Email
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
         {/* Upload Area */}
         <div className="border-2 border-dashed border-zinc-700 rounded-lg p-8 text-center hover:border-red-500 transition-colors">
           <div className="flex flex-col items-center gap-4">
@@ -347,6 +411,30 @@ export function EmailUpload() {
               <Sparkles className="h-5 w-5" />
               <span className="font-semibold">Automatically extracted data</span>
             </div>
+
+            {/* Email Info if fetched from mailbox */}
+            {emailInfo && (
+              <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4 mb-4">
+                <h4 className="text-blue-400 font-semibold mb-2 flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email Details
+                </h4>
+                <div className="space-y-1 text-sm">
+                  <div>
+                    <span className="text-zinc-500">From: </span>
+                    <span className="text-white">{emailInfo.from}</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-500">Subject: </span>
+                    <span className="text-white">{emailInfo.subject}</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-500">Date: </span>
+                    <span className="text-white">{emailInfo.date}</span>
+                  </div>
+                </div>
+              </div>
+            )}
             
             <div className="grid md:grid-cols-2 gap-4 text-sm">
               <div>

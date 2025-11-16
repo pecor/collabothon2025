@@ -437,6 +437,21 @@ export const extractOrderFromEmail = async (emailContent: string): Promise<Email
   return response.data;
 };
 
+export interface FetchLatestEmailResponse {
+  success: boolean;
+  email_subject?: string;
+  email_from?: string;
+  email_date?: string;
+  data: ExtractedOrderData;
+  error?: string;
+  raw_ai_response?: string;
+}
+
+export const fetchLatestEmail = async (): Promise<FetchLatestEmailResponse> => {
+  const response = await api.get<FetchLatestEmailResponse>('/orders/fetch-latest-email/');
+  return response.data;
+};
+
 // Route Calculation with Google Maps
 export interface RouteCalculationData {
   origin_address: string;
